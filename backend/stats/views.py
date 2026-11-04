@@ -278,3 +278,190 @@ class PatientStatsView(APIView):
             'top_doctors': top_doctors,
             'top_services': top_services,
         })
+
+
+# ── Clinic Analytics & Salary Statistics ─────────────────────────────────────
+
+class ClinicAnalyticsView(APIView):
+    """
+    Phân tích toàn diện chỉ số phòng khám: Doanh thu 12 tháng, Doanh thu theo ngày,
+    Cơ cấu dịch vụ, Hiệu suất bác sĩ, Tỷ lệ phương thức thanh toán.
+    """
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        import calendar
+        from services.models import Service
+
+        today = date.today()
+        year = int(request.query_params.get('year', today.year))
+        month = int(request.query_params.get('month', today.month))
+
+        paid_invoices = Invoice.objects.filter(status='paid')
+
+        # 1. Doanh thu 12 tháng của năm
+        monthly_revenue = []
+        for m in range(1, 13):
+            invs = paid_invoices.filter(paid_at__year=year, paid_at__month=m)
+            rev = invs.aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+            dep = invs.aggregate(total=Sum('deposit_deducted'))['total'] or Decimal('0')
+            cnt = invs.count()
+            monthly_revenue.append({
+                'month': f'T{m}',
+                'month_num': m,
+                'revenue': float(rev),
+                'deposit': float(dep),
+                'total_revenue': float(rev + dep),
+                'invoice_count': cnt,
+            })
+
+        # 2. Doanh thu theo ngày của tháng đang chọn
+        days_in_month = calendar.monthrange(year, month)[1]
+        daily_revenue = []
+        for d in range(1, days_in_month + 1):
+            day_invs = paid_invoices.filter(paid_at__year=year, paid_at__month=month, paid_at__day=d)
+            day_rev = day_invs.aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+            day_cnt = day_invs.count()
+            daily_revenue.append({
+                'day': f'{d:02d}/{month:02d}',
+                'day_num': d,
+                'revenue': float(day_rev),
+                'invoice_count': day_cnt,
+            })
+
+        # 3. Cơ cấu doanh thu theo Dịch vụ nha khoa
+        services = Service.objects.all()
+        service_stats = []
+        total_service_revenue = Decimal('0')
+
+        for s in services:
+            srv_invoices = paid_invoices.filter(appointment__service=s)
+            rev = srv_invoices.aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+            cnt = srv_invoices.count()
+            total_service_revenue += rev
+            if cnt > 0 or rev > 0:
+                service_stats.append({
+                    'id': s.id,
+                    'service_name': s.name,
+                    'price': float(s.price),
+                    'count': cnt,
+                    'revenue': float(rev),
+                })
+
+        service_stats.sort(key=lambda x: x['revenue'], reverse=True)
+        for s in service_stats:
+            s['percent'] = round((s['revenue'] / float(total_service_revenue) * 100), 1) if total_service_revenue > 0 else 0
+
+        # 4. Hiệu suất & Doanh thu theo Bác sĩ
+        doctors = Doctor.objects.select_related('user').all()
+        doctor_stats = []
+        for doc in doctors:
+            doc_invoices = paid_invoices.filter(appointment__doctor=doc)
+            doc_rev = doc_invoices.aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+            doc_apps = Appointment.objects.filter(doctor=doc, status='completed').count()
+            doctor_stats.append({
+                'doctor_id': doc.id,
+                'doctor_name': doc.user.get_full_name() or doc.user.username,
+                'specialty': doc.specialty,
+                'completed_appointments': doc_apps,
+                'revenue': float(doc_rev),
+            })
+        doctor_stats.sort(key=lambda x: x['revenue'], reverse=True)
+
+        # 5. Cơ cấu phương thức thanh toán
+        cash_rev = paid_invoices.filter(payment_method='cash').aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+        transfer_rev = paid_invoices.filter(payment_method='transfer').aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+        cash_cnt = paid_invoices.filter(payment_method='cash').count()
+        transfer_cnt = paid_invoices.filter(payment_method='transfer').count()
+
+        # 6. Tổng quan năm và tháng
+        year_revenue = paid_invoices.filter(paid_at__year=year).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+        month_revenue_val = paid_invoices.filter(paid_at__year=year, paid_at__month=month).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+        total_deposit_val = Appointment.objects.filter(deposit_status='verified').aggregate(total=Sum('deposit_amount'))['total'] or Decimal('0')
+
+        return Response({
+            'year': year,
+            'month': month,
+            'summary': {
+                'year_revenue': float(year_revenue),
+                'month_revenue': float(month_revenue_val),
+                'total_deposit': float(total_deposit_val),
+                'paid_invoices_count': paid_invoices.count(),
+            },
+            'monthly_revenue': monthly_revenue,
+            'daily_revenue': daily_revenue,
+            'service_stats': service_stats,
+            'doctor_stats': doctor_stats,
+            'payment_stats': [
+                {'method': 'Tiền mặt tại quầy', 'amount': float(cash_rev), 'count': cash_cnt},
+                {'method': 'Chuyển khoản QR ngân hàng', 'amount': float(transfer_rev), 'count': transfer_cnt},
+            ]
+        })
+
+
+class SalaryStatsView(APIView):
+    """Thống kê lương theo ca làm việc của bác sĩ và nhân viên"""
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        from schedules.models import StaffSalaryConfig, DoctorSchedule, PayrollRecord
+
+        today = date.today()
+        month = int(request.query_params.get('month', today.month))
+        year = int(request.query_params.get('year', today.year))
+
+        doctors = Doctor.objects.select_related('user').all()
+        result = []
+
+        for doc in doctors:
+            cfg, _ = StaffSalaryConfig.objects.get_or_create(
+                user=doc.user,
+                defaults={
+                    'base_salary': 0,
+                    'shift_rate': 400000,
+                    'commission_per_patient': 50000,
+                    'allowance': 500000,
+                    'note': 'Chế độ tiêu chuẩn'
+                }
+            )
+
+            schedules = DoctorSchedule.objects.filter(
+                doctor=doc,
+                date__year=year,
+                date__month=month,
+                status__in=['registered', 'approved', 'modified']
+            )
+            morning_cnt = schedules.filter(session__in=['morning', 'full']).count()
+            afternoon_cnt = schedules.filter(session__in=['afternoon', 'full']).count()
+            total_shifts = morning_cnt + afternoon_cnt
+
+            total_patients = Appointment.objects.filter(
+                doctor=doc,
+                appointment_date__year=year,
+                appointment_date__month=month,
+                status='completed'
+            ).count()
+
+            shift_salary = total_shifts * float(cfg.shift_rate)
+            commission_amt = total_patients * float(cfg.commission_per_patient)
+            base_sal = float(cfg.base_salary)
+            allowance = float(cfg.allowance)
+
+            result.append({
+                'doctor_id': doc.id,
+                'user_id': doc.user.id,
+                'doctor_name': doc.user.get_full_name() or doc.user.username,
+                'specialty': doc.specialty,
+                'total_shifts': total_shifts,
+                'morning_shifts': morning_cnt,
+                'afternoon_shifts': afternoon_cnt,
+                'total_patients': total_patients,
+                'rate_per_shift': float(cfg.shift_rate),
+                'shift_salary': shift_salary,
+                'commission_amount': commission_amt,
+                'base_salary': base_sal,
+                'allowance': allowance,
+                'estimated_salary': shift_salary + commission_amt + base_sal + allowance,
+            })
+
+        return Response(result)

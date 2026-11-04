@@ -5,6 +5,8 @@ from .views import (
     AppointmentStatsView,
     DoctorScheduleStatsView,
     PatientStatsView,
+    ClinicAnalyticsView,
+    SalaryStatsView,
 )
 
 urlpatterns = [
@@ -13,4 +15,6 @@ urlpatterns = [
     path('appointments/', AppointmentStatsView.as_view(), name='stats-appointments'),
     path('doctor-schedules/', DoctorScheduleStatsView.as_view(), name='stats-doctor-schedules'),
     path('patients/', PatientStatsView.as_view(), name='stats-patients'),
+    path('analytics/', ClinicAnalyticsView.as_view(), name='stats-analytics'),
+    path('salary/', SalaryStatsView.as_view(), name='stats-salary'),
 ]

@@ -24,6 +24,7 @@ import Doctors from './pages/admin/Doctors'
 import Patients from './pages/admin/Patients'
 import Services from './pages/admin/Services'
 import Statistics from './pages/admin/Statistics'
+import Payroll from './pages/admin/Payroll'
 
 // Receptionist Pages
 import ReceptionistDashboard from './pages/receptionist/Dashboard'
@@ -91,6 +92,7 @@ export default function App() {
               <Route path="doctors" element={<Doctors />} />
               <Route path="patients" element={<Patients />} />
               <Route path="services" element={<Services />} />
+              <Route path="payroll" element={<Payroll />} />
               <Route path="statistics" element={<Statistics />} />
             </Route>
 

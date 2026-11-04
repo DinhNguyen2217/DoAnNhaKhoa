@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from doctors.serializers import DoctorSerializer
-from .models import DoctorSchedule
+from .models import DoctorSchedule, StaffSalaryConfig, PayrollRecord
 
 
 class DoctorScheduleSerializer(serializers.ModelSerializer):
@@ -88,3 +88,64 @@ class DoctorScheduleAdminUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = DoctorSchedule
         fields = ['session', 'status', 'admin_note']
+
+
+# ── Salary & Payroll Serializers ──────────────────────────────────────────────
+
+class StaffSalaryConfigSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    user_role = serializers.CharField(source='user.role', read_only=True)
+    user_role_display = serializers.CharField(source='user.get_role_display', read_only=True)
+    phone = serializers.CharField(source='user.phone', read_only=True)
+    email = serializers.CharField(source='user.email', read_only=True)
+    specialty = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StaffSalaryConfig
+        fields = [
+            'id', 'user', 'user_name', 'user_role', 'user_role_display',
+            'phone', 'email', 'specialty',
+            'base_salary', 'shift_rate', 'commission_per_patient', 'allowance',
+            'note', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+    def get_user_name(self, obj):
+        return obj.user.get_full_name() or obj.user.username
+
+    def get_specialty(self, obj):
+        if hasattr(obj.user, 'doctor_profile'):
+            return obj.user.doctor_profile.specialty
+        return ''
+
+
+class PayrollRecordSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    user_role = serializers.CharField(source='user.role', read_only=True)
+    user_role_display = serializers.CharField(source='user.get_role_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    phone = serializers.CharField(source='user.phone', read_only=True)
+    specialty = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PayrollRecord
+        fields = [
+            'id', 'user', 'user_name', 'user_role', 'user_role_display', 'status_display',
+            'phone', 'specialty',
+            'month', 'year',
+            'total_shifts', 'morning_shifts', 'afternoon_shifts', 'total_patients_examined',
+            'shift_rate_applied', 'shift_salary', 'base_salary', 'commission_amount',
+            'allowance', 'bonus', 'deduction', 'net_salary',
+            'status', 'payment_method', 'paid_at', 'note', 'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'user', 'created_at', 'updated_at'
+        ]
+
+    def get_user_name(self, obj):
+        return obj.user.get_full_name() or obj.user.username
+
+    def get_specialty(self, obj):
+        if hasattr(obj.user, 'doctor_profile'):
+            return obj.user.doctor_profile.specialty
+        return ''

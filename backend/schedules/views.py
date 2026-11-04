@@ -36,7 +36,7 @@ class DoctorScheduleViewSet(viewsets.ModelViewSet):
         return DoctorSchedule.objects.select_related('doctor__user').all().order_by('-date')
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve', 'by_date', 'daily_overview']:
+        if self.action in ['list', 'retrieve', 'by_date', 'daily_overview', 'my_schedules', 'my_schedules_underscore']:
             return [IsAuthenticated()]
         if self.action == 'create':
             return [IsDoctor()]
@@ -94,6 +94,10 @@ class DoctorScheduleViewSet(viewsets.ModelViewSet):
         ).order_by('-date')
         serializer = DoctorScheduleSerializer(schedules, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='my_schedules')
+    def my_schedules_underscore(self, request):
+        return self.my_schedules(request)
 
     @action(detail=False, methods=['get'], url_path='by-date')
     def by_date(self, request):

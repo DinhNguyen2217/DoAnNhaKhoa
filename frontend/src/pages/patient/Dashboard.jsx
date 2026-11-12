@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Row, Col, Card, Button, Typography, Tag, Space, Divider,
-  Spin, Badge, Form, Input, Alert
+  Spin, Badge, Form, Input, Alert, Carousel
 } from 'antd'
 import {
   PlusCircleOutlined, CalendarOutlined, MedicineBoxOutlined,
   CheckCircleOutlined, InfoCircleOutlined, ClockCircleOutlined,
   PhoneOutlined, EnvironmentOutlined, MailOutlined, WechatOutlined,
   SafetyCertificateOutlined, SmileOutlined, StarFilled, ArrowRightOutlined,
-  SendOutlined, UserOutlined, ToolOutlined, ReadOutlined
+  SendOutlined, UserOutlined, ToolOutlined, ReadOutlined,
+  LeftOutlined, RightOutlined, ThunderboltOutlined,
+  CheckOutlined
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { getDoctors } from '../../api/doctors'
@@ -26,6 +28,78 @@ export default function PatientDashboard() {
   const [loading, setLoading] = useState(true)
   const [contactForm] = Form.useForm()
   const navigate = useNavigate()
+  const carouselRef = useRef(null)
+
+  const bannerSlides = [
+    {
+      id: 1,
+      image: '/banners/banner1.jpg',
+      tag: 'NHA KHOA THANH AN',
+      tagColor: '#52c41a',
+      title: 'Chuẩn Y Khoa • Không Đau',
+      subtitle: 'Nụ Cười Tươi Sáng - Trọn Vẹn Bình An',
+      desc: 'Hệ thống nha khoa kỹ thuật số hiện đại hàng đầu với phòng điều trị vô trùng 100%, đội ngũ bác sĩ tận tâm mang đến trải nghiệm êm ái, an toàn tuyệt đối cho bạn và gia đình.',
+      primaryBtnText: 'Đặt Lịch Khám Trực Tuyến',
+      primaryAction: () => handleBookingClick(),
+      secondaryBtnText: 'Khám Phá Dịch Vụ',
+      secondaryAction: () => {
+        const el = document.getElementById('dich-vu')
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      },
+      pills: ['Vô trùng tuyệt đối 100%', 'Bác sĩ chuyên khoa tận tâm', 'Phục hồi nhanh chóng']
+    },
+    {
+      id: 2,
+      image: '/banners/banner2.jpg',
+      tag: 'CHỈNH NHA KỸ THUẬT SỐ 3D',
+      tagColor: '#1890ff',
+      title: 'Niềng Răng Trong Suốt',
+      subtitle: 'Mô Phỏng 3D Nụ Cười Chuẩn Tỷ Lệ Vàng',
+      desc: 'Ứng dụng công nghệ quét hàm 3D Dental Scan và Smile Simulation, nhìn thấy trước kết quả nụ cười tương lai. Khay niềng vô hình thẩm mỹ cao, tự tin trong từng cử chỉ.',
+      primaryBtnText: 'Tư Vấn Niềng Răng 3D',
+      primaryAction: () => handleBookingClick(),
+      secondaryBtnText: 'Bảng Giá Niềng Răng',
+      secondaryAction: () => {
+        const el = document.getElementById('dich-vu')
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      },
+      pills: ['Smile Simulation 3D', 'Khay niềng vô hình thẩm mỹ', 'Rút ngắn thời gian']
+    },
+    {
+      id: 3,
+      image: '/banners/banner3.jpg',
+      tag: 'NHA KHOA TRẺ EM & GIA ĐÌNH',
+      tagColor: '#fa8c16',
+      title: 'Nụ Cười Cho Bé Yêu',
+      subtitle: 'Khám Răng Nhẹ Nhàng - Bé Không Còn Sợ Hãi',
+      desc: 'Không gian phòng khám trẻ em vui tươi, thân thiện kết hợp cùng đội ngũ bác sĩ tâm lý, ân cần. Chăm sóc toàn diện sức khỏe răng miệng từ mầm non đến mọi thành viên.',
+      primaryBtnText: 'Đặt Lịch Khám Cho Bé',
+      primaryAction: () => handleBookingClick(),
+      secondaryBtnText: 'Đội Ngũ Bác Sĩ',
+      secondaryAction: () => {
+        const el = document.getElementById('bac-si')
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      },
+      pills: ['Phòng khám riêng cho bé', 'Bác sĩ tâm lý nhẹ nhàng', 'Bé vui vẻ hợp tác']
+    },
+    {
+      id: 4,
+      image: '/banners/banner4.jpg',
+      tag: 'THẨM MỸ NỤ CƯỜI HOÀN HẢO',
+      tagColor: '#722ed1',
+      title: 'Tự Tin Tỏa Sáng',
+      subtitle: 'Răng Sứ Thẩm Mỹ & Tẩy Trắng Chuyên Sâu',
+      desc: 'Lấy lại hàm răng trắng sáng rạng rỡ, nụ cười chuẩn tỉ lệ gương mặt chỉ sau một liệu trình. Răng sứ cao cấp tinh xảo, bảo tồn tối đa răng thật và bảo hành dài hạn.',
+      primaryBtnText: 'Đặt Hẹn Thẩm Mỹ Răng',
+      primaryAction: () => handleBookingClick(),
+      secondaryBtnText: 'Xem Bảng Giá & Ưu Đãi',
+      secondaryAction: () => {
+        const el = document.getElementById('dich-vu')
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      },
+      pills: ['Trắng sáng tức thì', 'Sứ cao cấp chính hãng', 'Bảo hành dài hạn']
+    }
+  ]
 
   useEffect(() => {
     fetchClinicData()
@@ -63,91 +137,375 @@ export default function PatientDashboard() {
   return (
     <div>
       {/* ========================================================
-          1. HERO BANNER
+          1. HERO CAROUSEL BANNER (4 SLIDES ĐỘNG CHUYỂN TIẾP)
       ======================================================== */}
-      <div style={{
-        background: 'linear-gradient(135deg, #002244 0%, #004080 60%, #0059b3 100%)',
-        color: '#fff',
-        padding: '70px 32px',
-        borderRadius: 0,
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <Row align="middle" gutter={[32, 32]}>
-            <Col xs={24} md={15}>
-              <Badge count="Phòng khám Chuẩn Y Khoa" style={{ backgroundColor: '#52c41a', color: '#fff', fontSize: 13, padding: '4px 12px', borderRadius: 20 }} />
-              <Title level={1} style={{ color: '#fff', fontSize: 38, fontWeight: 800, marginTop: 16, marginBottom: 16, lineHeight: 1.25 }}>
-                Chăm Sóc Nụ Cười Của Bạn <br />
-                <span style={{ color: '#69c0ff' }}>Với Đội Ngũ Bác Sĩ Chuyên Sâu</span>
-              </Title>
-              <Paragraph style={{ color: '#d6e4ff', fontSize: 16, lineHeight: 1.7, maxWidth: 620, marginBottom: 28 }}>
-                Phòng khám Nha khoa Đà Nẵng tiên phong ứng dụng công nghệ hiện đại, quy trình vô trùng tuyệt đối khép kín và phác đồ điều trị nhẹ nhàng, bảo tồn răng tối đa cho từng bệnh nhân.
-              </Paragraph>
-              <Space size="middle" wrap>
-                <Button
-                  type="primary"
-                  size="large"
-                  icon={<PlusCircleOutlined />}
-                  onClick={() => handleBookingClick()}
+      <div style={{ position: 'relative', overflow: 'hidden', background: '#001529' }}>
+        {/* Nút Prev nổi bên trái */}
+        <button
+          onClick={() => carouselRef.current?.prev()}
+          aria-label="Previous slide"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: 20,
+            transform: 'translateY(-50%)',
+            zIndex: 10,
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            background: 'rgba(0, 20, 45, 0.55)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(82, 196, 26, 0.9)'
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 20, 45, 0.55)'
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
+          }}
+        >
+          <LeftOutlined style={{ fontSize: 20 }} />
+        </button>
+
+        {/* Nút Next nổi bên phải */}
+        <button
+          onClick={() => carouselRef.current?.next()}
+          aria-label="Next slide"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            right: 20,
+            transform: 'translateY(-50%)',
+            zIndex: 10,
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            background: 'rgba(0, 20, 45, 0.55)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(82, 196, 26, 0.9)'
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 20, 45, 0.55)'
+            e.currentTarget.style.transform = 'translateY(-50%) scale(1)'
+          }}
+        >
+          <RightOutlined style={{ fontSize: 20 }} />
+        </button>
+
+        {/* Carousel chính */}
+        <Carousel
+          ref={carouselRef}
+          autoplay
+          autoplaySpeed={5000}
+          effect="scrollx"
+          pauseOnHover
+          dots={{ className: 'custom-carousel-dots' }}
+        >
+          {bannerSlides.map((slide) => (
+            <div key={slide.id}>
+              <div
+                style={{
+                  minHeight: 540,
+                  position: 'relative',
+                  backgroundImage: `url(${slide.image})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center right',
+                  backgroundRepeat: 'no-repeat',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                {/* Lớp phủ gradient chuyển sắc mượt mà từ trái qua phải */}
+                <div
                   style={{
-                    background: '#52c41a',
-                    borderColor: '#52c41a',
-                    height: 50,
-                    padding: '0 28px',
-                    fontSize: 16,
-                    borderRadius: 8,
-                    fontWeight: 700,
-                    boxShadow: '0 4px 14px rgba(82, 196, 26, 0.4)'
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'linear-gradient(90deg, rgba(2, 16, 36, 0.95) 0%, rgba(2, 24, 52, 0.88) 42%, rgba(4, 38, 80, 0.52) 70%, rgba(0, 0, 0, 0.15) 100%)',
+                    zIndex: 1
+                  }}
+                />
+
+                {/* Nội dung text và nút thao tác */}
+                <div
+                  style={{
+                    position: 'relative',
+                    zIndex: 2,
+                    maxWidth: 1200,
+                    margin: '0 auto',
+                    padding: '60px 48px',
+                    width: '100%'
                   }}
                 >
-                  Đặt Lịch Khám Trực Tuyến
-                </Button>
-                <Button
-                  size="large"
-                  ghost
-                  onClick={() => {
-                    const el = document.getElementById('dich-vu')
-                    if (el) el.scrollIntoView({ behavior: 'smooth' })
+                  <Row align="middle">
+                    <Col xs={24} md={16} lg={14}>
+                      {/* Badge chuyên mục */}
+                      <div style={{ marginBottom: 16 }}>
+                        <span
+                          style={{
+                            backgroundColor: slide.tagColor,
+                            color: '#fff',
+                            fontSize: 13,
+                            fontWeight: 700,
+                            letterSpacing: '0.5px',
+                            padding: '6px 16px',
+                            borderRadius: 20,
+                            boxShadow: `0 2px 10px ${slide.tagColor}66`,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6
+                          }}
+                        >
+                          <ThunderboltOutlined />
+                          {slide.tag}
+                        </span>
+                      </div>
+
+                      {/* Tiêu đề chính */}
+                      <Title
+                        level={1}
+                        style={{
+                          color: '#fff',
+                          fontSize: 38,
+                          fontWeight: 800,
+                          marginTop: 0,
+                          marginBottom: 8,
+                          lineHeight: 1.25,
+                          textShadow: '0 2px 8px rgba(0,0,0,0.5)'
+                        }}
+                      >
+                        {slide.title} <br />
+                        <span style={{ color: '#69c0ff' }}>{slide.subtitle}</span>
+                      </Title>
+
+                      {/* Mô tả chi tiết */}
+                      <Paragraph
+                        style={{
+                          color: '#e6f7ff',
+                          fontSize: 16,
+                          lineHeight: 1.7,
+                          maxWidth: 620,
+                          marginTop: 14,
+                          marginBottom: 20,
+                          textShadow: '0 1px 4px rgba(0,0,0,0.6)'
+                        }}
+                      >
+                        {slide.desc}
+                      </Paragraph>
+
+                      {/* Pills điểm nổi bật */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 28 }}>
+                        {slide.pills.map((pill, idx) => (
+                          <span
+                            key={idx}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.12)',
+                              backdropFilter: 'blur(6px)',
+                              border: '1px solid rgba(255, 255, 255, 0.25)',
+                              color: '#fff',
+                              fontSize: 13,
+                              padding: '4px 12px',
+                              borderRadius: 16,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6
+                            }}
+                          >
+                            <CheckOutlined style={{ color: '#52c41a', fontSize: 12 }} />
+                            {pill}
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Nút hành động */}
+                      <Space size="middle" wrap>
+                        <Button
+                          type="primary"
+                          size="large"
+                          icon={<PlusCircleOutlined />}
+                          onClick={slide.primaryAction}
+                          style={{
+                            background: '#52c41a',
+                            borderColor: '#52c41a',
+                            height: 50,
+                            padding: '0 28px',
+                            fontSize: 16,
+                            borderRadius: 8,
+                            fontWeight: 700,
+                            boxShadow: '0 4px 14px rgba(82, 196, 26, 0.45)'
+                          }}
+                        >
+                          {slide.primaryBtnText}
+                        </Button>
+                        <Button
+                          size="large"
+                          ghost
+                          onClick={slide.secondaryAction}
+                          style={{
+                            height: 50,
+                            padding: '0 24px',
+                            fontSize: 15,
+                            borderRadius: 8,
+                            borderColor: 'rgba(255, 255, 255, 0.7)',
+                            color: '#fff',
+                            fontWeight: 600
+                          }}
+                        >
+                          {slide.secondaryBtnText}
+                        </Button>
+                      </Space>
+                    </Col>
+                  </Row>
+                </div>
+              </div>
+            </div>
+          ))}
+        </Carousel>
+      </div>
+
+      {/* ========================================================
+          THANH ĐIỂM TỰA DỊCH VỤ & CAM KẾT (FLOATING ASSURANCE BAR)
+      ======================================================== */}
+      <div
+        style={{
+          background: '#ffffff',
+          boxShadow: '0 8px 24px rgba(0, 32, 64, 0.08)',
+          borderBottom: '1px solid #e8e8e8',
+          padding: '24px 32px'
+        }}
+      >
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <Row gutter={[24, 20]} align="middle">
+            <Col xs={24} sm={12} md={6}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 12,
+                    background: '#f6ffed',
+                    border: '1px solid #b7eb8f',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
                   }}
-                  style={{ height: 50, padding: '0 24px', fontSize: 15, borderRadius: 8 }}
                 >
-                  Xem Dịch Vụ & Bảng Giá
-                </Button>
-              </Space>
+                  <SafetyCertificateOutlined style={{ fontSize: 24, color: '#52c41a' }} />
+                </div>
+                <div>
+                  <Text strong style={{ color: '#002244', fontSize: 14, display: 'block' }}>
+                    100% Vô Trùng Y Khoa
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    Dụng cụ riêng biệt, khép kín
+                  </Text>
+                </div>
+              </div>
             </Col>
 
-            <Col xs={24} md={9} style={{ textAlign: 'center' }}>
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                backdropFilter: 'blur(8px)',
-                borderRadius: 20,
-                padding: '32px 24px',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 20
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left' }}>
-                  <SafetyCertificateOutlined style={{ fontSize: 36, color: '#52c41a' }} />
-                  <div>
-                    <Text strong style={{ color: '#fff', fontSize: 15, display: 'block' }}>100% Vô Trùng Chuẩn Y Khoa</Text>
-                    <Text style={{ color: '#bfbfbf', fontSize: 13 }}>Dụng cụ riêng biệt cho từng người</Text>
-                  </div>
+            <Col xs={24} sm={12} md={6}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 12,
+                    background: '#e6f7ff',
+                    border: '1px solid #91d5ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  <UserOutlined style={{ fontSize: 24, color: '#1890ff' }} />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left' }}>
-                  <UserOutlined style={{ fontSize: 36, color: '#40a9ff' }} />
-                  <div>
-                    <Text strong style={{ color: '#fff', fontSize: 15, display: 'block' }}>Bác Sĩ Chuyên Khoa Giàu Kinh Nghiệm</Text>
-                    <Text style={{ color: '#bfbfbf', fontSize: 13 }}>Được đào tạo chính quy, tận tâm</Text>
-                  </div>
+                <div>
+                  <Text strong style={{ color: '#002244', fontSize: 14, display: 'block' }}>
+                    Bác Sĩ Chuyên Sâu
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    Đào tạo bài bản, giàu kinh nghiệm
+                  </Text>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left' }}>
-                  <ClockCircleOutlined style={{ fontSize: 36, color: '#ffd666' }} />
-                  <div>
-                    <Text strong style={{ color: '#fff', fontSize: 15, display: 'block' }}>Đặt Cọc 100k - Giữ Giờ Khám</Text>
-                    <Text style={{ color: '#bfbfbf', fontSize: 13 }}>Trừ trực tiếp vào viện phí khi khám</Text>
-                  </div>
+              </div>
+            </Col>
+
+            <Col xs={24} sm={12} md={6}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 12,
+                    background: '#fff7e6',
+                    border: '1px solid #ffd591',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  <ToolOutlined style={{ fontSize: 24, color: '#fa8c16' }} />
+                </div>
+                <div>
+                  <Text strong style={{ color: '#002244', fontSize: 14, display: 'block' }}>
+                    Công Nghệ Số 3D
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    Scan mẫu hàm & mô phỏng nụ cười
+                  </Text>
+                </div>
+              </div>
+            </Col>
+
+            <Col xs={24} sm={12} md={6}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 12,
+                    background: '#f9f0ff',
+                    border: '1px solid #d3adf7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  <ClockCircleOutlined style={{ fontSize: 24, color: '#722ed1' }} />
+                </div>
+                <div>
+                  <Text strong style={{ color: '#002244', fontSize: 14, display: 'block' }}>
+                    Đặt Cọc 100k Giữ Chỗ
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    Trừ trực tiếp khi đến thăm khám
+                  </Text>
                 </div>
               </div>
             </Col>

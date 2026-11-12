@@ -33,23 +33,6 @@ export default function PatientDashboard() {
   const bannerSlides = [
     {
       id: 1,
-      image: '/banners/banner1.jpg',
-      tag: 'NHA KHOA THANH AN',
-      tagColor: '#52c41a',
-      title: 'Chuẩn Y Khoa • Không Đau',
-      subtitle: 'Nụ Cười Tươi Sáng - Trọn Vẹn Bình An',
-      desc: 'Hệ thống nha khoa kỹ thuật số hiện đại hàng đầu với phòng điều trị vô trùng 100%, đội ngũ bác sĩ tận tâm mang đến trải nghiệm êm ái, an toàn tuyệt đối cho bạn và gia đình.',
-      primaryBtnText: 'Đặt Lịch Khám Trực Tuyến',
-      primaryAction: () => handleBookingClick(),
-      secondaryBtnText: 'Khám Phá Dịch Vụ',
-      secondaryAction: () => {
-        const el = document.getElementById('dich-vu')
-        if (el) el.scrollIntoView({ behavior: 'smooth' })
-      },
-      pills: ['Vô trùng tuyệt đối 100%', 'Bác sĩ chuyên khoa tận tâm', 'Phục hồi nhanh chóng']
-    },
-    {
-      id: 2,
       image: '/banners/banner2.jpg',
       tag: 'CHỈNH NHA KỸ THUẬT SỐ 3D',
       tagColor: '#1890ff',
@@ -66,7 +49,7 @@ export default function PatientDashboard() {
       pills: ['Smile Simulation 3D', 'Khay niềng vô hình thẩm mỹ', 'Rút ngắn thời gian']
     },
     {
-      id: 3,
+      id: 2,
       image: '/banners/banner3.jpg',
       tag: 'NHA KHOA TRẺ EM & GIA ĐÌNH',
       tagColor: '#fa8c16',
@@ -83,7 +66,7 @@ export default function PatientDashboard() {
       pills: ['Phòng khám riêng cho bé', 'Bác sĩ tâm lý nhẹ nhàng', 'Bé vui vẻ hợp tác']
     },
     {
-      id: 4,
+      id: 3,
       image: '/banners/banner4.jpg',
       tag: 'THẨM MỸ NỤ CƯỜI HOÀN HẢO',
       tagColor: '#722ed1',
@@ -225,11 +208,11 @@ export default function PatientDashboard() {
             <div key={slide.id}>
               <div
                 style={{
-                  minHeight: 540,
+                  minHeight: 650,
                   position: 'relative',
                   backgroundImage: `url(${slide.image})`,
                   backgroundSize: 'cover',
-                  backgroundPosition: 'center right',
+                  backgroundPosition: 'center',
                   backgroundRepeat: 'no-repeat',
                   display: 'flex',
                   alignItems: 'center'
@@ -255,7 +238,7 @@ export default function PatientDashboard() {
                     zIndex: 2,
                     maxWidth: 1200,
                     margin: '0 auto',
-                    padding: '60px 48px',
+                    padding: '85px 48px',
                     width: '100%'
                   }}
                 >

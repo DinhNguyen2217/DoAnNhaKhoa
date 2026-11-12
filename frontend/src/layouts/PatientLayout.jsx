@@ -101,10 +101,9 @@ export default function PatientLayout() {
             <HeartOutlined style={{ color: '#0050b3', fontSize: 24 }} />
           </div>
           <div>
-            <span style={{ fontSize: 17, fontWeight: 800, color: '#003366', letterSpacing: 0.5, lineHeight: 1.2 }}>
+            <span style={{ fontSize: 18, fontWeight: 800, color: '#003366', letterSpacing: 0.5, lineHeight: 1 }}>
               NHA KHOA ĐÀ NẴNG
             </span>
-            <span style={{ fontSize: 11, color: '#666', display: 'block' }}>Chăm sóc nụ cười & Sức khỏe răng miệng</span>
           </div>
         </div>
 

@@ -3,10 +3,10 @@ import { Card, Table, Tag, Typography, Button, Space, Alert, Popconfirm, Modal, 
 import {
   CalendarOutlined, PlusOutlined, WechatOutlined, ReloadOutlined,
   ClockCircleOutlined, CloseCircleOutlined, CheckCircleOutlined,
-  InfoCircleOutlined, PhoneOutlined
+  InfoCircleOutlined, PhoneOutlined, DeleteOutlined
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { getMyAppointments, cancelAppointment } from '../../api/appointments'
+import { getMyAppointments, cancelAppointment, deleteAppointmentHistory } from '../../api/appointments'
 import { formatDate, STATUS_COLORS, STATUS_LABELS } from '../../utils/helpers'
 import toast from 'react-hot-toast'
 
@@ -59,6 +59,17 @@ export default function PatientAppointments() {
       toast.error(msg)
     } finally {
       setSubmittingCancel(false)
+    }
+  }
+
+  const handleDeleteHistory = async (id) => {
+    try {
+      await deleteAppointmentHistory(id)
+      toast.success('Đã xóa lịch hẹn khỏi danh sách lịch sử của bạn.')
+      fetchAppointments()
+    } catch (err) {
+      const msg = err.response?.data?.detail || 'Không thể xóa lịch hẹn này.'
+      toast.error(msg)
     }
   }
 
@@ -123,39 +134,72 @@ export default function PatientAppointments() {
       render: (st) => <Tag color={STATUS_COLORS[st]}>{STATUS_LABELS[st] || st}</Tag>
     },
     {
-      title: 'Hủy / Thay đổi lịch',
+      title: 'Hủy / Thao tác lịch sử',
       key: 'actions',
       render: (_, r) => {
-        if (r.status === 'cancelled') {
-          return <span style={{ color: '#999', fontSize: 12 }}>Đã hủy</span>
-        }
-        if (['completed', 'checked_in', 'in_progress'].includes(r.status)) {
-          return <span style={{ color: '#52c41a', fontSize: 12 }}>Đang/Đã khám</span>
-        }
-
-        // Kiểm tra quyền hủy trong 30 phút
-        if (r.can_cancel) {
-          const remainingMinutes = Math.max(1, 30 - (r.minutes_since_created || 0))
+        // 1. Lịch đã khám hoàn tất -> Được phép xóa lịch sử để làm sạch trang
+        if (r.status === 'completed') {
           return (
-            <div>
-              <Button
-                danger
-                size="small"
-                icon={<CloseCircleOutlined />}
-                onClick={() => handleOpenCancelModal(r)}
-              >
-                Hủy lịch ({remainingMinutes}p)
+            <Popconfirm
+              title="Xóa lịch hẹn này khỏi lịch sử?"
+              description="Buổi khám đã hoàn tất. Xóa sẽ giúp trang lịch sử của bạn sạch đẹp hơn."
+              onConfirm={() => handleDeleteHistory(r.id)}
+              okText="Xóa"
+              cancelText="Không"
+              okButtonProps={{ danger: true }}
+            >
+              <Button size="small" danger icon={<DeleteOutlined />}>
+                Xóa lịch sử
               </Button>
-            </div>
+            </Popconfirm>
           )
         }
 
-        // Quá 30 phút: Hướng dẫn gọi hotline / Zalo
+        // 2. Lịch đã hủy -> Cho phép xóa khỏi danh sách
+        if (r.status === 'cancelled') {
+          return (
+            <Space size={8}>
+              <span style={{ color: '#999', fontSize: 12 }}>Đã hủy</span>
+              <Popconfirm
+                title="Xóa lịch đã hủy này khỏi lịch sử?"
+                onConfirm={() => handleDeleteHistory(r.id)}
+                okText="Xóa"
+                cancelText="Hủy"
+              >
+                <Button size="small" type="text" danger icon={<DeleteOutlined />}>
+                  Xóa
+                </Button>
+              </Popconfirm>
+            </Space>
+          )
+        }
+
+        // 3. Lịch đang khám hoặc đã check-in -> Không được xóa
+        if (['checked_in', 'in_progress'].includes(r.status)) {
+          return <span style={{ color: '#1677ff', fontSize: 12, fontWeight: 500 }}>Đang khám (Không xóa)</span>
+        }
+
+        // 4. Lịch đang đợi khám (confirmed / pending) -> Tuyệt đối không được xóa, chỉ được hủy trong 30p
+        if (r.can_cancel) {
+          const remainingMinutes = Math.max(1, 30 - (r.minutes_since_created || 0))
+          return (
+            <Button
+              danger
+              size="small"
+              icon={<CloseCircleOutlined />}
+              onClick={() => handleOpenCancelModal(r)}
+            >
+              Hủy lịch ({remainingMinutes}p)
+            </Button>
+          )
+        }
+
+        // Quá 30 phút: Không được hủy trên web và không được xóa
         return (
           <div style={{ fontSize: 12, color: '#666' }}>
-            <span>Quá 30p: </span>
+            <span>Đang chờ khám: </span>
             <a href="tel:0901234567" style={{ color: '#0050b3', fontWeight: 600 }}>
-              Gọi 0901.234.567
+              LH 0901.234.567
             </a>
           </div>
         )

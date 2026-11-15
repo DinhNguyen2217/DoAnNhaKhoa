@@ -54,6 +54,7 @@ class Appointment(models.Model):
     cancellation_reason = models.TextField(blank=True)
 
     # Tracking
+    is_hidden_by_patient = models.BooleanField(default=False, help_text='Ẩn khỏi lịch sử phía bệnh nhân')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     checked_in_at = models.DateTimeField(null=True, blank=True)

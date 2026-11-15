@@ -37,7 +37,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         if user.role == 'patient':
             from patients.models import Patient
             patient, _ = Patient.objects.get_or_create(user=user)
-            return qs.filter(patient=patient).order_by('-appointment_date')
+            return qs.filter(patient=patient, is_hidden_by_patient=False).order_by('-appointment_date', '-id')
         if user.role == 'doctor':
             from doctors.models import Doctor
             doctor, _ = Doctor.objects.get_or_create(user=user)
@@ -53,7 +53,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             return [IsAdminOrReceptionist()]
         if self.action in ['confirm_deposit', 'check_in']:
             return [IsAdminOrReceptionist()]
-        if self.action in ['cancel_appointment']:
+        if self.action in ['cancel_appointment', 'patient_delete']:
             return [IsAuthenticated()]
         if self.action == 'destroy':
             return [IsAdmin()]
@@ -241,6 +241,27 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
             return Response({'booked_slots': booked})
 
+    @action(detail=True, methods=['post', 'delete'], url_path='patient-delete', permission_classes=[IsAuthenticated])
+    def patient_delete(self, request, pk=None):
+        """Bệnh nhân xóa lịch sử đặt lịch (Chỉ cho phép xóa lịch đã khám xong hoặc đã hủy)"""
+        appointment = self.get_object()
+        user = request.user
+
+        if user.role == 'patient':
+            from patients.models import Patient
+            patient, _ = Patient.objects.get_or_create(user=user)
+            if appointment.patient != patient:
+                return Response({'detail': 'Bạn không có quyền thao tác trên lịch hẹn này.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if appointment.status not in ['completed', 'cancelled']:
+            return Response({
+                'detail': 'Chỉ có thể xóa lịch sử những buổi hẹn đã khám hoàn tất hoặc đã hủy. Lịch hẹn đang đợi khám hoặc đang trong quá trình khám không được phép xóa!'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        appointment.is_hidden_by_patient = True
+        appointment.save()
+        return Response({'detail': 'Đã xóa lịch hẹn khỏi danh sách lịch sử thành công.'}, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=['post'], url_path='mark-no-show', permission_classes=[IsAdminOrReceptionist])
     def mark_no_show(self, request, pk=None):
         """Đánh dấu bệnh nhân không đến"""
@@ -256,9 +277,12 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         user = request.user
         from patients.models import Patient
         patient, _ = Patient.objects.get_or_create(user=user)
-        appointments = Appointment.objects.filter(patient=patient).select_related(
+        appointments = Appointment.objects.filter(
+            patient=patient,
+            is_hidden_by_patient=False
+        ).select_related(
             'doctor__user', 'service', 'schedule'
-        ).order_by('-appointment_date')
+        ).order_by('-appointment_date', '-id')
         page = self.paginate_queryset(appointments)
         if page is not None:
             serializer = AppointmentSerializer(page, many=True)

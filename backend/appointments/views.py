@@ -51,8 +51,10 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated()]
         if self.action in ['update', 'partial_update']:
             return [IsAdminOrReceptionist()]
-        if self.action in ['confirm_deposit', 'check_in', 'cancel_appointment']:
+        if self.action in ['confirm_deposit', 'check_in']:
             return [IsAdminOrReceptionist()]
+        if self.action in ['cancel_appointment']:
+            return [IsAuthenticated()]
         if self.action == 'destroy':
             return [IsAdmin()]
         return [IsAuthenticated()]
@@ -75,7 +77,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         user = self.request.user
         from patients.models import Patient
         patient, _ = Patient.objects.get_or_create(user=user)
-        serializer.save(patient=patient, status='pending', deposit_status='not_paid')
+        serializer.save(patient=patient, status='confirmed', deposit_amount=0, deposit_status='not_paid')
 
     # ── Actions ──────────────────────────────────────────────────────────────
 
@@ -150,11 +152,25 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         appointment.save()
         return Response(AppointmentSerializer(appointment).data)
 
-    @action(detail=True, methods=['post'], url_path='cancel')
+    @action(detail=True, methods=['post'], url_path='cancel', permission_classes=[IsAuthenticated])
     def cancel_appointment(self, request, pk=None):
-        """Hủy lịch hẹn"""
+        """Hủy lịch hẹn (Bệnh nhân tự hủy trong 30 phút; Lễ tân/Admin hủy bất cứ lúc nào)"""
         appointment = self.get_object()
         user = request.user
+
+        if user.role == 'patient':
+            from patients.models import Patient
+            patient, _ = Patient.objects.get_or_create(user=user)
+            if appointment.patient != patient:
+                return Response({'detail': 'Bạn không có quyền thao tác trên lịch hẹn này.'}, status=status.HTTP_403_FORBIDDEN)
+            if appointment.status in ['cancelled', 'completed', 'checked_in', 'in_progress']:
+                return Response({'detail': f'Không thể hủy lịch hẹn đã ở trạng thái {appointment.get_status_display()}.'}, status=status.HTTP_400_BAD_REQUEST)
+            if appointment.created_at:
+                diff = timezone.now() - appointment.created_at
+                if diff.total_seconds() > 30 * 60:
+                    return Response({
+                        'detail': 'Đã quá thời hạn 30 phút kể từ lúc đặt lịch. Quý khách vui lòng liên hệ nhân viên lễ tân (Hotline/Zalo 0901.234.567) để được hỗ trợ hủy hoặc điều chỉnh thông tin!'
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = AppointmentCancelSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -165,6 +181,65 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             appointment.deposit_status = 'forfeited'
         appointment.save()
         return Response(AppointmentSerializer(appointment).data)
+
+    @action(detail=False, methods=['get'], url_path='booked-slots')
+    def booked_slots(self, request):
+        """
+        Lấy danh sách các khung giờ 30 phút đã được đặt theo ngày, ca, bác sĩ.
+        Nếu doctor='auto' hoặc rỗng, trả về các khung giờ mà TẤT CẢ bác sĩ trực đều đã kín.
+        """
+        date_str = request.query_params.get('date')
+        doctor_id = request.query_params.get('doctor')
+        session = request.query_params.get('session')
+
+        if not date_str:
+            return Response({'booked_slots': []})
+
+        from .serializers import MORNING_SLOTS, AFTERNOON_SLOTS
+        from schedules.models import DoctorSchedule
+        from doctors.models import Doctor
+
+        if session == 'morning':
+            slots_to_check = MORNING_SLOTS
+        elif session == 'afternoon':
+            slots_to_check = AFTERNOON_SLOTS
+        else:
+            slots_to_check = MORNING_SLOTS + AFTERNOON_SLOTS
+
+        if doctor_id and doctor_id not in ['auto', '', 'null', 'undefined']:
+            booked = list(Appointment.objects.filter(
+                appointment_date=date_str,
+                doctor_id=doctor_id,
+                time_slot__in=slots_to_check
+            ).exclude(status='cancelled').values_list('time_slot', flat=True))
+            return Response({'booked_slots': booked})
+        else:
+            active_doctors = Doctor.objects.filter(is_active=True)
+            eligible_doctors = []
+            for doc in active_doctors:
+                sched = DoctorSchedule.objects.filter(doctor=doc, date=date_str, is_working=True).first()
+                if sched:
+                    if session == 'morning' and not sched.has_morning():
+                        continue
+                    if session == 'afternoon' and not sched.has_afternoon():
+                        continue
+                eligible_doctors.append(doc)
+
+            if not eligible_doctors:
+                return Response({'booked_slots': slots_to_check})
+
+            booked = []
+            for slot in slots_to_check:
+                booked_doc_count = Appointment.objects.filter(
+                    appointment_date=date_str,
+                    doctor__in=eligible_doctors,
+                    time_slot=slot
+                ).exclude(status='cancelled').values('doctor').distinct().count()
+
+                if booked_doc_count >= len(eligible_doctors):
+                    booked.append(slot)
+
+            return Response({'booked_slots': booked})
 
     @action(detail=True, methods=['post'], url_path='mark-no-show', permission_classes=[IsAdminOrReceptionist])
     def mark_no_show(self, request, pk=None):

@@ -16,7 +16,7 @@ export default function ChatbotWidget() {
   const [messages, setMessages] = useState([
     {
       sender: 'bot',
-      text: 'Xin chào! Tôi là Trợ lý AI của Phòng khám Nha khoa. Tôi có thể giúp bạn tra cứu thông tin dịch vụ, bảng giá, bác sĩ trực hoặc hướng dẫn quy trình đặt lịch khám và đặt cọc.',
+      text: 'Xin chào! Tôi là Trợ lý AI của Phòng khám Nha khoa. Tôi có thể giúp bạn tra cứu thông tin dịch vụ, bảng giá, bác sĩ trực hoặc hướng dẫn quy trình đặt lịch khám theo khung giờ 30 phút.',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ])
@@ -211,7 +211,7 @@ export default function ChatbotWidget() {
           <div style={{ padding: '6px 12px', background: '#f0f2f5', display: 'flex', gap: 6, overflowX: 'auto', borderTop: '1px solid #e8e8e8' }}>
             <Button size="small" shape="round" onClick={() => handleQuickQuestion('Bảng giá dịch vụ nha khoa?')}>Bảng giá</Button>
             <Button size="small" shape="round" onClick={() => handleQuickQuestion('Bác sĩ nào trực hôm nay?')}>Bác sĩ trực</Button>
-            <Button size="small" shape="round" onClick={() => handleQuickQuestion('Quy định đặt cọc 100k như thế nào?')}>Tiền cọc 100k</Button>
+            <Button size="small" shape="round" onClick={() => handleQuickQuestion('Quy định đặt lịch và hủy lịch 30 phút?')}>Khung giờ 30p</Button>
           </div>
 
           {/* Input Box */}

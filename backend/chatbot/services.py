@@ -38,9 +38,10 @@ def get_clinic_context() -> str:
 THÔNG TIN PHÒNG KHÁM NHA KHOA:
 - Tên: Phòng khám Nha khoa
 - Giờ làm việc: Thứ 2 - Thứ 7 | Sáng: 8:00 - 12:00 | Chiều: 13:00 - 17:00
-- Tiền đặt cọc khi đặt lịch: 100.000đ (chuyển khoản hoặc QR code)
-- Thanh toán tại phòng khám: Tiền mặt hoặc chuyển khoản
-- Liên hệ đổi lịch: Qua Zalo của phòng khám
+- Khung giờ khám bệnh: Mỗi ca chia thành các khung giờ 30 phút (Sáng: 08:00 - 12:00, Chiều: 13:00 - 17:00). Mỗi khung giờ chỉ tiếp nhận 1 bệnh nhân/bác sĩ để tránh chờ đợi lâu.
+- Đặt cọc: KHÔNG bắt buộc đặt cọc (hoàn toàn miễn phí khi đặt lịch hẹn).
+- Chính sách hủy/đổi lịch: Bệnh nhân có thể tự hủy lịch trên hệ thống trong vòng 30 phút kể từ lúc đặt. Nếu quá 30 phút, vui lòng liên hệ nhân viên lễ tân (Hotline/Zalo 0901.234.567) để được hỗ trợ dời hoặc hủy lịch.
+- Thanh toán tại phòng khám: Tiền mặt hoặc chuyển khoản/QR code sau khi khám xong.
 
 DANH SÁCH BÁC SĨ:
 {doctor_list if doctor_list else "Chưa có thông tin bác sĩ."}
@@ -52,12 +53,12 @@ LỊCH LÀM VIỆC HÔM NAY ({today.strftime('%d/%m/%Y')}):
 {today_schedule_text}
 
 HƯỚNG DẪN ĐẶT LỊCH:
-1. Đăng ký / đăng nhập tài khoản
-2. Chọn bác sĩ và xem lịch làm việc
-3. Chọn dịch vụ, ngày khám và ca (sáng/chiều)
-4. Chuyển khoản 100.000đ tiền cọc theo thông tin phòng khám
-5. Bấm "Đã đặt cọc" để thông báo lễ tân xác nhận
-6. Nhận xác nhận lịch hẹn
+1. Đăng ký / đăng nhập tài khoản bệnh nhân
+2. Chọn dịch vụ nha khoa cần khám
+3. Chọn bác sĩ phụ trách (hoặc để hệ thống tự động sắp xếp bác sĩ phù hợp)
+4. Chọn ngày khám, ca khám và KHUNG GIỜ KHÁM 30 PHÚT
+5. Nhập ghi chú triệu chứng và bấm "Xác nhận đặt lịch"
+6. Hệ thống tự động xác nhận lịch hẹn ngay lập tức mà không cần đặt cọc
 """
 
 

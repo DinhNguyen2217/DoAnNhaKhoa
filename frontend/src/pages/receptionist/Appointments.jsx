@@ -79,14 +79,19 @@ export default function ReceptionistAppointments() {
       render: (_, r) => r.service_info?.name || r.service?.name || '-'
     },
     {
-      title: 'Ngày hẹn & Ca',
+      title: 'Thời gian khám (Khung 30p)',
       key: 'date_session',
       render: (_, r) => (
         <div>
-          <div>{formatDate(r.appointment_date)}</div>
-          <Tag color={r.session === 'morning' ? 'orange' : 'blue'}>
-            {r.session === 'morning' ? 'Sáng' : 'Chiều'}
-          </Tag>
+          <div style={{ fontWeight: 600 }}>{formatDate(r.appointment_date)}</div>
+          <Space size={4} style={{ marginTop: 2 }}>
+            <Tag color={r.session === 'morning' ? 'orange' : 'blue'}>
+              {r.session === 'morning' ? 'Sáng' : 'Chiều'}
+            </Tag>
+            {r.time_slot ? (
+              <Tag color="geekblue" style={{ fontWeight: 600 }}>{r.time_slot}</Tag>
+            ) : null}
+          </Space>
         </div>
       )
     },

@@ -10,3 +10,4 @@ export const markArrived = (id, data) => api.post(`/appointments/${id}/check-in/
 export const markNoShow = (id) => api.post(`/appointments/${id}/mark-no-show/`)
 export const getMyAppointments = (params) => api.get('/appointments/my-appointments/', { params })
 export const notifyDeposit = (id, data) => api.post(`/appointments/${id}/notify-deposit/`, data || {})
+export const getBookedSlots = (params) => api.get('/appointments/booked-slots/', { params })

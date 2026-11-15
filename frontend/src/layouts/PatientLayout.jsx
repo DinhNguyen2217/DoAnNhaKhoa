@@ -166,7 +166,7 @@ export default function PatientLayout() {
               <h4 style={{ color: '#fff', fontSize: 15, marginBottom: 16 }}>THÔNG TIN LIÊN HỆ</h4>
               <p style={{ margin: '6px 0', fontSize: 13 }}>📍 Địa chỉ: 54 Nguyễn Lương Bằng, P. Hòa Khánh Bắc, Q. Liên Chiểu, TP. Đà Nẵng</p>
               <p style={{ margin: '6px 0', fontSize: 13 }}>📞 Hotline tư vấn: <strong>0901.234.567</strong></p>
-              <p style={{ margin: '6px 0', fontSize: 13 }}>💬 Zalo hỗ trợ cọc & đổi lịch: <strong>0901.234.567</strong></p>
+              <p style={{ margin: '6px 0', fontSize: 13 }}>💬 Zalo hỗ trợ & đổi lịch: <strong>0901.234.567</strong></p>
               <p style={{ margin: '6px 0', fontSize: 13 }}>✉️ Email: info@nhakhoadanang.com</p>
             </div>
           </div>

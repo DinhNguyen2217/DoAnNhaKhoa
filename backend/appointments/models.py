@@ -39,10 +39,11 @@ class Appointment(models.Model):
 
     appointment_date = models.DateField()
     session = models.CharField(max_length=20, choices=SESSION_CHOICES)
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='pending')
+    time_slot = models.CharField(max_length=30, blank=True, default='', help_text='Khung giờ khám 30 phút (VD: 08:00 - 08:30)')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='confirmed')
 
-    # Đặt cọc
-    deposit_amount = models.DecimalField(max_digits=10, decimal_places=2, default=100000)
+    # Đặt cọc (Không bắt buộc cọc)
+    deposit_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     deposit_status = models.CharField(max_length=30, choices=DEPOSIT_STATUS_CHOICES, default='not_paid')
     deposit_note = models.TextField(blank=True, help_text='Ghi chú xác nhận cọc của lễ tân')
     deposit_confirmed_at = models.DateTimeField(null=True, blank=True)

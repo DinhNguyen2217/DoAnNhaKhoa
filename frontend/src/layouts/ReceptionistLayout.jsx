@@ -4,7 +4,8 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   DashboardOutlined, CalendarOutlined, CheckCircleOutlined,
   UserAddOutlined, FileTextOutlined, LogoutOutlined,
-  MenuFoldOutlined, MenuUnfoldOutlined, HeartOutlined, UserOutlined
+  MenuFoldOutlined, MenuUnfoldOutlined, HeartOutlined, UserOutlined,
+  ClockCircleOutlined
 } from '@ant-design/icons'
 import { useAuth } from '../context/AuthContext'
 import { logout } from '../api/auth'

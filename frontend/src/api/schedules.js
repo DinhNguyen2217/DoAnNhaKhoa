@@ -17,3 +17,9 @@ export const updateSalaryConfig = (id, data) => api.patch(`/schedules/salary-con
 export const getPayrolls = (params) => api.get('/schedules/payrolls/', { params })
 export const calculatePayroll = (data) => api.post('/schedules/payrolls/calculate/', data)
 export const markPayrollPaid = (id, data) => api.post(`/schedules/payrolls/${id}/mark-paid/`, data)
+
+// Staff Attendance (Chấm ca làm việc cho nhân viên)
+export const getMyAttendance = (params) => api.get('/schedules/attendances/check-in/', { params })
+export const checkInShift = (data) => api.post('/schedules/attendances/check-in/', data)
+export const getAttendances = (params) => api.get('/schedules/attendances/', { params })
+

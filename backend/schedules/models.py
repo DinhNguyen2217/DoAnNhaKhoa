@@ -115,3 +115,35 @@ class PayrollRecord(models.Model):
 
     def __str__(self):
         return f"Bảng lương T{self.month}/{self.year} - {self.user.get_full_name() or self.user.username} ({self.net_salary:,.0f}đ)"
+
+
+class StaffAttendance(models.Model):
+    """
+    Chấm công ca làm việc của Nhân viên / Bác sĩ.
+    Nhân viên chọn ngày và tick chọn 1 trong 3 ca:
+    - 'morning': Ca Sáng (8h - 12h)
+    - 'afternoon': Ca Chiều (13h - 17h)
+    - 'full': Cả Ngày (8h - 17h)
+    Dữ liệu được cập nhật tự động sang Admin để giám sát và tính lương.
+    """
+    SESSION_CHOICES = [
+        ('morning', 'Ca Sáng (8h - 12h)'),
+        ('afternoon', 'Ca Chiều (13h - 17h)'),
+        ('full', 'Cả Ngày (8h - 17h)'),
+    ]
+
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='attendances')
+    date = models.DateField(help_text='Ngày chấm ca làm việc')
+    session = models.CharField(max_length=20, choices=SESSION_CHOICES, default='full')
+    notes = models.TextField(blank=True, help_text='Ghi chú chấm ca')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'staff_attendances'
+        unique_together = ['user', 'date']
+        ordering = ['-date', 'user__role']
+
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} - {self.date}: {self.get_session_display()}"
+

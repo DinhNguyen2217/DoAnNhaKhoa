@@ -22,7 +22,7 @@ export default function ReceptionistLayout() {
   const menuItems = [
     { key: '/receptionist/dashboard', icon: <DashboardOutlined />, label: 'Tổng quan' },
     { key: '/receptionist/appointments', icon: <CalendarOutlined />, label: 'Lịch hẹn' },
-    { key: '/receptionist/deposit', icon: <CheckCircleOutlined />, label: 'Xác nhận cọc' },
+    { key: '/receptionist/attendance', icon: <ClockCircleOutlined />, label: 'Chấm ca trực' },
     { key: '/receptionist/reception', icon: <UserAddOutlined />, label: 'Tiếp nhận' },
     { key: '/receptionist/invoices', icon: <FileTextOutlined />, label: 'Hóa đơn' },
   ]

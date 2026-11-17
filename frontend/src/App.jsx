@@ -29,7 +29,7 @@ import Payroll from './pages/admin/Payroll'
 // Receptionist Pages
 import ReceptionistDashboard from './pages/receptionist/Dashboard'
 import ReceptionistAppointments from './pages/receptionist/Appointments'
-import ReceptionistDeposit from './pages/receptionist/Deposit'
+import ReceptionistAttendance from './pages/receptionist/Attendance'
 import ReceptionistReception from './pages/receptionist/Reception'
 import ReceptionistInvoices from './pages/receptionist/Invoices'
 
@@ -108,7 +108,8 @@ export default function App() {
               <Route index element={<Navigate to="/receptionist/dashboard" replace />} />
               <Route path="dashboard" element={<ReceptionistDashboard />} />
               <Route path="appointments" element={<ReceptionistAppointments />} />
-              <Route path="deposit" element={<ReceptionistDeposit />} />
+              <Route path="attendance" element={<ReceptionistAttendance />} />
+              <Route path="deposit" element={<Navigate to="/receptionist/attendance" replace />} />
               <Route path="reception" element={<ReceptionistReception />} />
               <Route path="invoices" element={<ReceptionistInvoices />} />
             </Route>

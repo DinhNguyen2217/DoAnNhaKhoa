@@ -9,13 +9,14 @@ from django_filters.rest_framework import DjangoFilterBackend
 from accounts.models import User
 from accounts.permissions import IsAdmin, IsDoctor, IsAdminOrReceptionist
 from appointments.models import Appointment
-from .models import DoctorSchedule, StaffSalaryConfig, PayrollRecord
+from .models import DoctorSchedule, StaffSalaryConfig, PayrollRecord, StaffAttendance
 from .serializers import (
     DoctorScheduleSerializer,
     DoctorScheduleCreateSerializer,
     DoctorScheduleAdminUpdateSerializer,
     StaffSalaryConfigSerializer,
     PayrollRecordSerializer,
+    StaffAttendanceSerializer,
 )
 
 
@@ -298,10 +299,22 @@ class PayrollRecordViewSet(viewsets.ModelViewSet):
                     status='completed'
                 ).count()
             else:
-                # Lễ tân: tính theo số ca làm việc chuẩn
-                total_shifts = Decimal('44.0')
-                morning_cnt = 22
-                afternoon_cnt = 22
+                # Lễ tân / Nhân viên: Tính từ dữ liệu chấm ca làm việc thực tế
+                attendances = StaffAttendance.objects.filter(
+                    user=u,
+                    date__year=year,
+                    date__month=month
+                )
+                morning_cnt = attendances.filter(session__in=['morning', 'full']).count()
+                afternoon_cnt = attendances.filter(session__in=['afternoon', 'full']).count()
+                total_shifts = Decimal(str(morning_cnt + afternoon_cnt))
+
+                # Nếu nhân viên chưa chấm ca ngày nào trong tháng, tính mặc định theo tháng làm việc
+                if total_shifts == Decimal('0'):
+                    total_shifts = Decimal('44.0')
+                    morning_cnt = 22
+                    afternoon_cnt = 22
+
                 total_patients = Appointment.objects.filter(
                     appointment_date__year=year,
                     appointment_date__month=month,
@@ -375,3 +388,53 @@ class PayrollRecordViewSet(viewsets.ModelViewSet):
         payroll.save()
 
         return Response(PayrollRecordSerializer(payroll).data)
+
+
+class StaffAttendanceViewSet(viewsets.ModelViewSet):
+    """
+    Chấm công ca làm việc của Nhân viên (Lễ tân/Bác sĩ) và chuyển sang Admin tính lương.
+    """
+    serializer_class = StaffAttendanceSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['date', 'session', 'user']
+    ordering_fields = ['date', 'created_at']
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'admin':
+            return StaffAttendance.objects.select_related('user').all()
+        return StaffAttendance.objects.filter(user=user).select_related('user')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=['get', 'post'], url_path='check-in')
+    def check_in(self, request):
+        """
+        Nhân viên chấm ca làm việc theo ngày:
+        POST: { date: 'YYYY-MM-DD', session: 'morning' | 'afternoon' | 'full', notes: '' }
+        GET: Lấy thông tin chấm ca của ngày được truyền ?date=YYYY-MM-DD
+        """
+        user = request.user
+        if request.method == 'GET':
+            target_date = request.query_params.get('date', str(date.today()))
+            att = StaffAttendance.objects.filter(user=user, date=target_date).first()
+            if att:
+                return Response(StaffAttendanceSerializer(att).data)
+            return Response({'date': target_date, 'session': None, 'is_checked_in': False})
+
+        target_date_str = request.data.get('date') or str(date.today())
+        session_choice = request.data.get('session', 'full')
+        notes = request.data.get('notes', '')
+
+        if session_choice not in ['morning', 'afternoon', 'full']:
+            return Response({'detail': 'Ca làm việc không hợp lệ (phải là morning, afternoon hoặc full).'}, status=status.HTTP_400_BAD_REQUEST)
+
+        att, created = StaffAttendance.objects.update_or_create(
+            user=user,
+            date=target_date_str,
+            defaults={'session': session_choice, 'notes': notes}
+        )
+        return Response(StaffAttendanceSerializer(att).data, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
+

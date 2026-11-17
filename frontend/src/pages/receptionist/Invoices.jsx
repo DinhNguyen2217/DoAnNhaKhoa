@@ -106,8 +106,9 @@ export default function ReceptionistInvoices() {
       toast.success('Xác nhận thanh toán hóa đơn viện phí thành công!')
       setPayModal(false)
       fetchData()
-    } catch {
-      toast.error('Lỗi khi cập nhật thanh toán hóa đơn.')
+    } catch (err) {
+      const msg = err.response?.data?.detail || err.response?.data?.message || 'Lỗi khi cập nhật thanh toán hóa đơn.'
+      toast.error(msg)
     } finally {
       setSubmittingPay(false)
     }
@@ -328,7 +329,7 @@ export default function ReceptionistInvoices() {
 
       <Alert
         message="Nguyên tắc tính viện phí chuẩn y khoa:"
-        description="Khi bệnh nhân đến khám, bác sĩ sẽ ghi nhận chẩn đoán, thủ thuật đã làm và đơn thuốc vào Hồ sơ bệnh án. Hệ thống tự động chuyển dữ liệu sang quầy Lễ tân, đối trừ 100.000đ tiền cọc và xác định số tiền thực thu. Nếu bác sĩ chưa lưu bệnh án, lễ tân chưa thể tính tiền."
+        description="Khi bệnh nhân đến khám, bác sĩ sẽ ghi nhận chẩn đoán, thủ thuật đã làm và đơn thuốc vào Hồ sơ bệnh án. Hệ thống tự động chuyển dữ liệu sang quầy Lễ tân để tính viện phí và xuất hóa đơn trực tiếp tại quầy. Nếu bác sĩ chưa lưu bệnh án, lễ tân chưa thể tính tiền."
         type="info"
         showIcon
         style={{ marginBottom: 20, borderRadius: 10 }}
@@ -465,10 +466,12 @@ export default function ReceptionistInvoices() {
                 <strong>{formatMoney(selectedItem.subtotal)}</strong>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, margin: '4px 0', color: '#d46b08' }}>
-                <span>Khấu trừ tiền cọc trực tuyến đã nộp:</span>
-                <strong>- {formatMoney(selectedItem.deposit_deducted || 100000)}</strong>
-              </div>
+              {Number(selectedItem.deposit_deducted) > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, margin: '4px 0', color: '#d46b08' }}>
+                  <span>Khấu trừ tiền cọc trực tuyến đã nộp:</span>
+                  <strong>- {formatMoney(selectedItem.deposit_deducted)}</strong>
+                </div>
+              )}
 
               <Divider style={{ margin: '10px 0' }} />
 

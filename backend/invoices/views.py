@@ -34,7 +34,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             return [IsAdminOrReceptionist()]
         if self.action in ['list', 'retrieve']:
             return [IsAuthenticated()]
-        if self.action in ['confirm_payment', 'add_item', 'remove_item']:
+        if self.action in ['confirm_payment', 'add_item', 'remove_item', 'create_from_appointment']:
             return [IsAdminOrReceptionist()]
         return [IsAdmin()]
 
@@ -121,6 +121,14 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         if serializer.validated_data.get('notes'):
             invoice.notes = serializer.validated_data['notes']
         invoice.save()
+
+        # Tự động cập nhật lịch hẹn sang hoàn thành nếu chưa hoàn thành
+        if hasattr(invoice, 'appointment') and invoice.appointment:
+            app = invoice.appointment
+            if app.status != 'completed':
+                app.status = 'completed'
+                app.completed_at = timezone.now()
+                app.save()
         return Response(InvoiceSerializer(invoice).data)
 
     @action(detail=True, methods=['post'], url_path='add-item')

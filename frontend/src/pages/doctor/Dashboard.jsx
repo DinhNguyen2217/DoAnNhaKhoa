@@ -81,10 +81,22 @@ export default function DoctorDashboard() {
       render: (_, r) => <Tag color="cyan">{r.service_info?.name || r.service?.name || 'Khám nha khoa'}</Tag>
     },
     {
-      title: 'Ca khám',
-      dataIndex: 'session',
-      key: 'session',
-      render: (s) => s === 'morning' ? <Tag color="orange">Sáng (8h-12h)</Tag> : <Tag color="blue">Chiều (13h-17h)</Tag>
+      title: 'Thời gian khám (Khung 30p)',
+      key: 'session_time',
+      render: (_, r) => (
+        <div>
+          <Tag color={r.session === 'morning' ? 'orange' : 'blue'}>
+            {r.session === 'morning' ? 'Ca Sáng' : 'Ca Chiều'}
+          </Tag>
+          {r.time_slot ? (
+            <div style={{ marginTop: 4 }}>
+              <Tag color="geekblue" icon={<ClockCircleOutlined />} style={{ fontWeight: 700 }}>
+                {r.time_slot}
+              </Tag>
+            </div>
+          ) : null}
+        </div>
+      )
     },
     {
       title: 'Trạng thái khám',
@@ -116,17 +128,25 @@ export default function DoctorDashboard() {
     {
       title: 'Thao tác',
       key: 'action',
-      render: (_, r) => (
-        <Button
-          type="primary"
-          size="small"
-          icon={<MedicineBoxOutlined />}
-          onClick={() => navigate('/doctor/examination', { state: { appointmentId: r.id } })}
-          style={{ background: '#003a8c' }}
-        >
-          {r.status === 'completed' ? 'Xem bệnh án' : 'Vào khám'}
-        </Button>
-      )
+      render: (_, r) => {
+        if (r.status === 'cancelled') {
+          return <span style={{ color: '#999', fontSize: 13, fontStyle: 'italic' }}>Lịch đã hủy</span>
+        }
+        if (r.status === 'no_show') {
+          return <span style={{ color: '#cf1322', fontSize: 13, fontStyle: 'italic' }}>Vắng mặt</span>
+        }
+        return (
+          <Button
+            type="primary"
+            size="small"
+            icon={<MedicineBoxOutlined />}
+            onClick={() => navigate('/doctor/examination', { state: { appointmentId: r.id } })}
+            style={{ background: '#003a8c' }}
+          >
+            {r.status === 'completed' || r.has_medical_record ? 'Xem bệnh án' : 'Vào khám'}
+          </Button>
+        )
+      }
     }
   ]
 

@@ -664,14 +664,24 @@ export default function PatientDashboard() {
                           width: 100,
                           height: 100,
                           borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #1890ff 0%, #0050b3 100%)',
+                          background: (doc.avatar || doc.user?.avatar) ? '#f0f5ff' : 'linear-gradient(135deg, #1890ff 0%, #0050b3 100%)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           margin: '0 auto 12px',
-                          boxShadow: '0 4px 12px rgba(24,144,255,0.3)'
+                          boxShadow: '0 4px 12px rgba(24,144,255,0.25)',
+                          overflow: 'hidden',
+                          border: '3px solid #e6f7ff'
                         }}>
-                          <UserOutlined style={{ fontSize: 50, color: '#fff' }} />
+                          {(doc.avatar || doc.user?.avatar) ? (
+                            <img
+                              src={doc.avatar || doc.user?.avatar}
+                              alt={`BS. ${doc.user?.first_name}`}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <UserOutlined style={{ fontSize: 50, color: '#fff' }} />
+                          )}
                         </div>
                         <Badge status="success" text="Đang tiếp nhận lịch" />
                       </Col>

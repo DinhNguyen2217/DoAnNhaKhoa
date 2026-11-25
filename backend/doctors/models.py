@@ -3,6 +3,7 @@ from django.db import models
 
 class Doctor(models.Model):
     user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, related_name='doctor_profile')
+    avatar = models.ImageField(upload_to='doctors/', blank=True, null=True, verbose_name='Ảnh đại diện')
     specialty = models.CharField(max_length=100)
     experience_years = models.IntegerField(default=0)
     description = models.TextField(blank=True)
@@ -16,3 +17,9 @@ class Doctor(models.Model):
 
     def __str__(self):
         return f"BS. {self.user.get_full_name()} - {self.specialty}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.avatar and self.user and not self.user.avatar:
+            self.user.avatar = self.avatar
+            self.user.save(update_fields=['avatar'])

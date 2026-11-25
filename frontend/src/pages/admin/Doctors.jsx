@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Table, Card, Button, Input, Tag, Space, Modal, Form, Typography, InputNumber, Switch, Row, Col, Popconfirm } from 'antd'
-import { MedicineBoxOutlined, SearchOutlined, EditOutlined, ReloadOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Table, Card, Button, Input, Tag, Space, Modal, Form, Typography, InputNumber, Switch, Row, Col, Popconfirm, Avatar } from 'antd'
+import { MedicineBoxOutlined, SearchOutlined, EditOutlined, ReloadOutlined, PlusOutlined, DeleteOutlined, UserOutlined, UploadOutlined, CameraOutlined } from '@ant-design/icons'
 import { getDoctors, createDoctor, updateDoctor, deleteDoctor, toggleAvailable } from '../../api/doctors'
 import { formatMoney } from '../../utils/helpers'
 import toast from 'react-hot-toast'
@@ -16,6 +16,12 @@ export default function Doctors() {
   const [selectedDoc, setSelectedDoc] = useState(null)
   const [form] = Form.useForm()
   const [createForm] = Form.useForm()
+
+  // Avatar upload states
+  const [createAvatarFile, setCreateAvatarFile] = useState(null)
+  const [createAvatarPreview, setCreateAvatarPreview] = useState(null)
+  const [editAvatarFile, setEditAvatarFile] = useState(null)
+  const [editAvatarPreview, setEditAvatarPreview] = useState(null)
 
   useEffect(() => {
     fetchDoctors()
@@ -33,12 +39,48 @@ export default function Doctors() {
     }
   }
 
+  const handleCreateAvatarChange = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Vui lòng chọn tệp định dạng hình ảnh (JPG, PNG, WEBP)!')
+        return
+      }
+      setCreateAvatarFile(file)
+      setCreateAvatarPreview(URL.createObjectURL(file))
+    }
+  }
+
+  const handleEditAvatarChange = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Vui lòng chọn tệp định dạng hình ảnh (JPG, PNG, WEBP)!')
+        return
+      }
+      setEditAvatarFile(file)
+      setEditAvatarPreview(URL.createObjectURL(file))
+    }
+  }
+
   const handleCreate = async (values) => {
     try {
-      await createDoctor(values)
-      toast.success('Thêm bác sĩ mới thành công! Bác sĩ sẽ tự động hiển thị trên Trang chủ khách hàng.')
+      const formData = new FormData()
+      Object.keys(values).forEach(key => {
+        if (values[key] !== undefined && values[key] !== null) {
+          formData.append(key, values[key])
+        }
+      })
+      if (createAvatarFile) {
+        formData.append('avatar', createAvatarFile)
+      }
+
+      await createDoctor(formData)
+      toast.success('Thêm bác sĩ mới thành công! Bác sĩ và ảnh sẽ tự động hiển thị trên Trang chủ khách hàng.')
       setCreateModal(false)
       createForm.resetFields()
+      setCreateAvatarFile(null)
+      setCreateAvatarPreview(null)
       fetchDoctors()
     } catch (err) {
       const data = err.response?.data
@@ -49,6 +91,8 @@ export default function Doctors() {
 
   const handleEdit = (record) => {
     setSelectedDoc(record)
+    setEditAvatarFile(null)
+    setEditAvatarPreview(record.avatar || record.user?.avatar || null)
     form.setFieldsValue({
       first_name: record.user?.first_name,
       last_name: record.user?.last_name,
@@ -64,9 +108,21 @@ export default function Doctors() {
 
   const handleSaveEdit = async (values) => {
     try {
-      await updateDoctor(selectedDoc.id, values)
-      toast.success('Cập nhật hồ sơ bác sĩ thành công! Thông tin mới đã được đồng bộ ra Trang chủ.')
+      const formData = new FormData()
+      Object.keys(values).forEach(key => {
+        if (values[key] !== undefined && values[key] !== null) {
+          formData.append(key, values[key])
+        }
+      })
+      if (editAvatarFile) {
+        formData.append('avatar', editAvatarFile)
+      }
+
+      await updateDoctor(selectedDoc.id, formData)
+      toast.success('Cập nhật hồ sơ bác sĩ thành công! Thông tin và ảnh mới đã được đồng bộ.')
       setEditModal(false)
+      setEditAvatarFile(null)
+      setEditAvatarPreview(null)
       fetchDoctors()
     } catch {
       toast.error('Lỗi khi cập nhật hồ sơ bác sĩ.')
@@ -97,14 +153,32 @@ export default function Doctors() {
     {
       title: 'Bác sĩ',
       key: 'name',
-      render: (_, r) => (
-        <div>
-          <Text strong style={{ color: '#003366', fontSize: 14 }}>
-            BS. {r.user?.first_name} {r.user?.last_name || r.user?.username}
-          </Text>
-          <div style={{ fontSize: 12, color: '#8c8c8c' }}>SĐT: {r.user?.phone || 'Chưa có SĐT'} | Email: {r.user?.email || 'Chưa có'}</div>
-        </div>
-      )
+      render: (_, r) => {
+        const avatarUrl = r.avatar || r.user?.avatar
+        return (
+          <Space align="center" size={14}>
+            <Avatar
+              size={52}
+              src={avatarUrl}
+              icon={<UserOutlined />}
+              style={{
+                backgroundColor: avatarUrl ? 'transparent' : '#1890ff',
+                border: '2px solid #91d5ff',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                flexShrink: 0
+              }}
+            />
+            <div>
+              <Text strong style={{ color: '#003366', fontSize: 14 }}>
+                BS. {r.user?.first_name} {r.user?.last_name || r.user?.username}
+              </Text>
+              <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
+                SĐT: {r.user?.phone || 'Chưa có SĐT'} | Email: {r.user?.email || 'Chưa có'}
+              </div>
+            </div>
+          </Space>
+        )
+      }
     },
     {
       title: 'Chuyên khoa',
@@ -161,10 +235,19 @@ export default function Doctors() {
         <div>
           <Title level={3} style={{ margin: 0, color: '#003366' }}>QUẢN LÝ ĐỘI NGŨ BÁC SĨ</Title>
           <Text type="secondary">
-            Bác sĩ được thêm hoặc cập nhật tại đây sẽ tự động hiển thị trực tiếp trên Trang chủ của Bệnh nhân
+            Bác sĩ và hình ảnh đại diện được thêm hoặc cập nhật tại đây sẽ tự động hiển thị trực tiếp trên Trang chủ của Bệnh nhân
           </Text>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModal(true)}>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => {
+            setCreateAvatarFile(null)
+            setCreateAvatarPreview(null)
+            createForm.resetFields()
+            setCreateModal(true)
+          }}
+        >
           Thêm bác sĩ mới
         </Button>
       </div>
@@ -200,9 +283,62 @@ export default function Doctors() {
         open={createModal}
         onCancel={() => setCreateModal(false)}
         footer={null}
-        width={680}
+        width={720}
       >
         <Form form={createForm} layout="vertical" onFinish={handleCreate} initialValues={{ experience_years: 5, consultation_fee: 200000 }}>
+          {/* Avatar upload section */}
+          <div style={{ background: '#f8fafc', padding: '16px 20px', borderRadius: 10, marginBottom: 20, border: '1px solid #e2e8f0' }}>
+            <Text strong style={{ color: '#003366', display: 'block', marginBottom: 10 }}>
+              <CameraOutlined style={{ marginRight: 6, color: '#1890ff' }} />
+              Ảnh chân dung đại diện bác sĩ (Hiển thị cho bệnh nhân):
+            </Text>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+              <Avatar
+                size={80}
+                src={createAvatarPreview}
+                icon={<UserOutlined style={{ fontSize: 40 }} />}
+                style={{
+                  backgroundColor: createAvatarPreview ? 'transparent' : '#e6f7ff',
+                  color: '#1890ff',
+                  border: '2px dashed #91d5ff',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  flexShrink: 0
+                }}
+              />
+              <div style={{ flex: 1 }}>
+                <input
+                  type="file"
+                  id="create-doctor-avatar-input"
+                  accept="image/png, image/jpeg, image/jpg, image/webp"
+                  style={{ display: 'none' }}
+                  onChange={handleCreateAvatarChange}
+                />
+                <Space wrap>
+                  <Button
+                    icon={<UploadOutlined />}
+                    onClick={() => document.getElementById('create-doctor-avatar-input').click()}
+                  >
+                    Chọn ảnh từ máy tính
+                  </Button>
+                  {createAvatarPreview && (
+                    <Button
+                      danger
+                      onClick={() => {
+                        setCreateAvatarFile(null)
+                        setCreateAvatarPreview(null)
+                      }}
+                    >
+                      Hủy ảnh
+                    </Button>
+                  )}
+                </Space>
+                <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>
+                  Hỗ trợ định dạng JPG, PNG, WEBP (dung lượng tối ưu dưới 5MB). Hình ảnh rõ nét sẽ giúp bệnh nhân tin tưởng và dễ nhận diện bác sĩ.
+                </div>
+              </div>
+            </div>
+          </div>
+
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item name="first_name" label="Họ và tên đệm" rules={[{ required: true, message: 'Nhập họ đệm!' }]}>
@@ -289,9 +425,61 @@ export default function Doctors() {
         open={editModal}
         onCancel={() => setEditModal(false)}
         footer={null}
-        width={680}
+        width={720}
       >
         <Form form={form} layout="vertical" onFinish={handleSaveEdit}>
+          {/* Avatar edit section */}
+          <div style={{ background: '#f8fafc', padding: '16px 20px', borderRadius: 10, marginBottom: 20, border: '1px solid #e2e8f0' }}>
+            <Text strong style={{ color: '#003366', display: 'block', marginBottom: 10 }}>
+              <CameraOutlined style={{ marginRight: 6, color: '#1890ff' }} />
+              Ảnh chân dung đại diện bác sĩ:
+            </Text>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+              <Avatar
+                size={80}
+                src={editAvatarPreview}
+                icon={<UserOutlined style={{ fontSize: 40 }} />}
+                style={{
+                  backgroundColor: editAvatarPreview ? 'transparent' : '#e6f7ff',
+                  color: '#1890ff',
+                  border: '2px solid #91d5ff',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  flexShrink: 0
+                }}
+              />
+              <div style={{ flex: 1 }}>
+                <input
+                  type="file"
+                  id="edit-doctor-avatar-input"
+                  accept="image/png, image/jpeg, image/jpg, image/webp"
+                  style={{ display: 'none' }}
+                  onChange={handleEditAvatarChange}
+                />
+                <Space wrap>
+                  <Button
+                    icon={<UploadOutlined />}
+                    onClick={() => document.getElementById('edit-doctor-avatar-input').click()}
+                  >
+                    Thay đổi ảnh đại diện
+                  </Button>
+                  {editAvatarFile && (
+                    <Button
+                      onClick={() => {
+                        setEditAvatarFile(null)
+                        setEditAvatarPreview(selectedDoc?.avatar || selectedDoc?.user?.avatar || null)
+                      }}
+                    >
+                      Khôi phục ảnh cũ
+                    </Button>
+                  )}
+                </Space>
+                <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>
+                  {editAvatarFile ? 'Đã chọn ảnh mới. Bấm "Cập nhật" để lưu ảnh này.' : 'Nếu không muốn đổi ảnh, bạn có thể giữ nguyên.'}
+                </div>
+              </div>
+            </div>
+          </div>
+
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item name="first_name" label="Họ và tên đệm">

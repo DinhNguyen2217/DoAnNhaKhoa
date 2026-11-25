@@ -2,6 +2,7 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django_filters.rest_framework import DjangoFilterBackend
 from accounts.permissions import IsAdmin, IsAdminOrReceptionist
 from .models import Doctor
@@ -13,6 +14,7 @@ class DoctorViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['specialty', 'is_available']
     search_fields = ['user__first_name', 'user__last_name', 'specialty']
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -30,7 +32,7 @@ class DoctorViewSet(viewsets.ModelViewSet):
         serializer = DoctorCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         doctor = serializer.save()
-        return Response(DoctorSerializer(doctor).data, status=status.HTTP_201_CREATED)
+        return Response(DoctorSerializer(doctor, context={'request': request}).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAdmin])
     def toggle_available(self, request, pk=None):

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Card, Table, Tag, Typography, Button, Space, Alert, Popconfirm, Modal, Input } from 'antd'
+import { Card, Table, Tag, Typography, Button, Space, Alert, Popconfirm, Modal, Input, Avatar } from 'antd'
 import {
   CalendarOutlined, PlusOutlined, WechatOutlined, ReloadOutlined,
   ClockCircleOutlined, CloseCircleOutlined, CheckCircleOutlined,
-  InfoCircleOutlined, PhoneOutlined, DeleteOutlined
+  InfoCircleOutlined, PhoneOutlined, DeleteOutlined, UserOutlined
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { getMyAppointments, cancelAppointment, deleteAppointmentHistory } from '../../api/appointments'
@@ -87,13 +87,17 @@ export default function PatientAppointments() {
       render: (_, r) => {
         const dInfo = r.doctor_info || r.doctor
         const docName = `${dInfo?.user?.first_name || ''} ${dInfo?.user?.last_name || ''}`.trim() || dInfo?.user?.username || 'Bác sĩ'
+        const avatarUrl = dInfo?.avatar || dInfo?.user?.avatar
         return (
-          <div>
-            <Text strong>BS. {docName}</Text>
-            {dInfo?.specialty && (
-              <div style={{ fontSize: 12, color: '#666' }}>{dInfo.specialty}</div>
-            )}
-          </div>
+          <Space align="center" size={10}>
+            <Avatar size={36} src={avatarUrl} icon={<UserOutlined />} style={{ backgroundColor: '#1890ff', flexShrink: 0 }} />
+            <div>
+              <Text strong>BS. {docName}</Text>
+              {dInfo?.specialty && (
+                <div style={{ fontSize: 12, color: '#666' }}>{dInfo.specialty}</div>
+              )}
+            </div>
+          </Space>
         )
       }
     },

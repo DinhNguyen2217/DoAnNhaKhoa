@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   Card, Steps, Button, Select, DatePicker, Row, Col, Typography,
-  Alert, Divider, Input, Spin, Badge, Space, Radio, Tag, Result
+  Alert, Divider, Input, Spin, Badge, Space, Radio, Tag, Result, Avatar
 } from 'antd'
 import {
   UserOutlined, CalendarOutlined, CheckCircleOutlined,
@@ -282,10 +282,34 @@ export default function PatientBooking() {
               </div>
             ) : (
               docObj && (
-                <div style={{ background: '#f0f5ff', padding: '12px 16px', borderRadius: 8, marginBottom: 24, borderLeft: '4px solid #1890ff' }}>
-                  <Text strong style={{ color: '#003366' }}>Hồ sơ bác sĩ:</Text>
-                  <div style={{ fontSize: 13, color: '#444', marginTop: 4 }}>
-                    {docObj.description || 'Chuyên gia nha khoa giàu kinh nghiệm trong chẩn đoán và điều trị kỹ thuật cao.'}
+                <div style={{ background: '#f0f5ff', padding: '16px 20px', borderRadius: 10, marginBottom: 24, borderLeft: '4px solid #1890ff', border: '1px solid #d6e4ff' }}>
+                  <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                    <Avatar
+                      size={64}
+                      src={docObj.avatar || docObj.user?.avatar}
+                      icon={<UserOutlined />}
+                      style={{
+                        backgroundColor: (docObj.avatar || docObj.user?.avatar) ? 'transparent' : '#1890ff',
+                        border: '2px solid #91d5ff',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                        flexShrink: 0
+                      }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                        <Text strong style={{ color: '#003366', fontSize: 16 }}>
+                          BS. {docObj.user?.first_name} {docObj.user?.last_name || docObj.user?.username}
+                        </Text>
+                        <Tag color="blue">{docObj.specialty}</Tag>
+                      </div>
+                      <div style={{ fontSize: 13, color: '#4b5563', marginTop: 4 }}>
+                        {docObj.description || 'Bác sĩ chuyên khoa giàu kinh nghiệm trong chẩn đoán và điều trị nha khoa kỹ thuật cao.'}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                        <span>Kinh nghiệm: <strong style={{ color: '#111827' }}>{docObj.experience_years} năm</strong></span>
+                        <span>Phí khám: <strong style={{ color: '#eb2f96' }}>{formatMoney(docObj.consultation_fee)}</strong></span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )
@@ -432,18 +456,21 @@ export default function PatientBooking() {
 
             <Divider orientation="left" style={{ fontSize: 14 }}>Tóm tắt lịch hẹn</Divider>
             <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: 18, borderRadius: 10, marginBottom: 24 }}>
-              <p style={{ margin: '4px 0' }}>
-                Bác sĩ phụ trách:{' '}
+              <div style={{ margin: '6px 0', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span>Bác sĩ phụ trách:</span>
                 {docObj ? (
-                  <strong style={{ color: '#003366' }}>
-                    BS. {docObj?.user?.first_name} {docObj?.user?.last_name || docObj?.user?.username} ({docObj?.specialty})
-                  </strong>
+                  <Space align="center" size={8}>
+                    <Avatar size={28} src={docObj.avatar || docObj.user?.avatar} icon={<UserOutlined />} />
+                    <strong style={{ color: '#003366' }}>
+                      BS. {docObj?.user?.first_name} {docObj?.user?.last_name || docObj?.user?.username} ({docObj?.specialty})
+                    </strong>
+                  </Space>
                 ) : (
                   <strong style={{ color: '#15803d' }}>
                     ✨ Phòng khám tự sắp xếp bác sĩ chuyên khoa phù hợp
                   </strong>
                 )}
-              </p>
+              </div>
               <p style={{ margin: '4px 0' }}>Dịch vụ đăng ký: <strong style={{ color: '#003366' }}>{serObj?.name || 'Chưa chọn'}</strong> — Chi phí tham khảo: <strong style={{ color: '#eb2f96' }}>{formatMoney(serObj?.price)}</strong></p>
               <p style={{ margin: '4px 0' }}>
                 Thời gian khám: Ngày <strong>{appointmentDate ? dayjs(appointmentDate).format('DD/MM/YYYY') : 'Chưa chọn'}</strong> | Khung giờ: <strong style={{ color: '#0050b3' }}>{timeSlot || 'Chưa chọn'}</strong> ({session === 'morning' ? 'Buổi Sáng' : 'Buổi Chiều'})

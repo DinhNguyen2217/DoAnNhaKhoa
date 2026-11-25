@@ -49,12 +49,19 @@ export default function DoctorSchedule() {
         note: values.note || ''
       }
       await createSchedule(payload)
-      toast.success('Đăng ký ca làm việc thành công!')
+      toast.success('Đăng ký / Cập nhật ca làm việc thành công!')
       setIsModalOpen(false)
       form.resetFields()
       fetchSchedules()
     } catch (err) {
-      const msg = err.response?.data?.non_field_errors?.[0] || err.response?.data?.date?.[0] || 'Lỗi khi đăng ký ca làm việc (có thể bạn đã đăng ký ngày này rồi).'
+      const data = err.response?.data
+      let msg = 'Lỗi khi đăng ký ca làm việc.'
+      if (data) {
+        if (typeof data === 'string') msg = data
+        else if (data.detail) msg = data.detail
+        else if (data.date) msg = Array.isArray(data.date) ? data.date[0] : data.date
+        else if (data.non_field_errors) msg = data.non_field_errors[0]
+      }
       toast.error(msg)
     }
   }

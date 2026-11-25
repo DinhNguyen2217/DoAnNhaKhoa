@@ -4,7 +4,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   DashboardOutlined, CalendarOutlined, TeamOutlined,
   MedicineBoxOutlined, LogoutOutlined, MenuFoldOutlined,
-  MenuUnfoldOutlined, HeartOutlined, UserOutlined
+  MenuUnfoldOutlined, HeartOutlined, UserOutlined, HistoryOutlined
 } from '@ant-design/icons'
 import { useAuth } from '../context/AuthContext'
 import { logout } from '../api/auth'
@@ -24,6 +24,7 @@ export default function DoctorLayout() {
     { key: '/doctor/schedule', icon: <CalendarOutlined />, label: 'Ca làm việc' },
     { key: '/doctor/patients', icon: <TeamOutlined />, label: 'Bệnh nhân hôm nay' },
     { key: '/doctor/examination', icon: <MedicineBoxOutlined />, label: 'Khám bệnh' },
+    { key: '/doctor/history', icon: <HistoryOutlined />, label: 'Lịch sử khám bệnh' },
   ]
 
   const handleLogout = async () => {

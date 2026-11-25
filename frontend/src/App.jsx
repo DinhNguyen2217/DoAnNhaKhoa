@@ -25,6 +25,7 @@ import Patients from './pages/admin/Patients'
 import Services from './pages/admin/Services'
 import Statistics from './pages/admin/Statistics'
 import Payroll from './pages/admin/Payroll'
+import AdminExaminationHistory from './pages/admin/ExaminationHistory'
 
 // Receptionist Pages
 import ReceptionistDashboard from './pages/receptionist/Dashboard'
@@ -38,6 +39,7 @@ import DoctorDashboard from './pages/doctor/Dashboard'
 import DoctorSchedule from './pages/doctor/Schedule'
 import DoctorPatients from './pages/doctor/Patients'
 import DoctorExamination from './pages/doctor/Examination'
+import DoctorExaminationHistory from './pages/doctor/ExaminationHistory'
 
 // Patient Pages
 import PatientDashboard from './pages/patient/Dashboard'
@@ -91,6 +93,7 @@ export default function App() {
               <Route path="accounts" element={<Accounts />} />
               <Route path="doctors" element={<Doctors />} />
               <Route path="patients" element={<Patients />} />
+              <Route path="examination-history" element={<AdminExaminationHistory />} />
               <Route path="services" element={<Services />} />
               <Route path="payroll" element={<Payroll />} />
               <Route path="statistics" element={<Statistics />} />
@@ -128,6 +131,7 @@ export default function App() {
               <Route path="schedule" element={<DoctorSchedule />} />
               <Route path="patients" element={<DoctorPatients />} />
               <Route path="examination" element={<DoctorExamination />} />
+              <Route path="history" element={<DoctorExaminationHistory />} />
             </Route>
 
             {/* Patient & Public Clinic Portal Routes */}

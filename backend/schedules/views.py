@@ -40,7 +40,7 @@ class DoctorScheduleViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve', 'by_date', 'daily_overview', 'my_schedules', 'my_schedules_underscore']:
             return [IsAuthenticated()]
         if self.action == 'create':
-            return [IsDoctor()]
+            return [IsAuthenticated()]
         if self.action in ['update', 'partial_update', 'destroy']:
             # Bác sĩ sửa lịch của mình, Admin sửa tất cả
             return [IsAuthenticated()]
@@ -56,8 +56,48 @@ class DoctorScheduleViewSet(viewsets.ModelViewSet):
             return DoctorScheduleCreateSerializer
         return DoctorScheduleSerializer
 
+    def create(self, request, *args, **kwargs):
+        from doctors.models import Doctor
+        user = request.user
+        if user.role == 'doctor':
+            doctor, _ = Doctor.objects.get_or_create(user=user)
+        elif user.role == 'admin':
+            doctor_id = request.data.get('doctor')
+            doctor = Doctor.objects.filter(id=doctor_id).first() if doctor_id else Doctor.objects.first()
+        else:
+            return Response({'detail': 'Chỉ có bác sĩ hoặc quản trị viên mới được đăng ký lịch.'}, status=status.HTTP_403_FORBIDDEN)
+
+        date_val = request.data.get('date')
+        if not date_val:
+            return Response({'date': ['Vui lòng chọn ngày làm việc.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        from datetime import date as dt_date
+        try:
+            parsed_date = dt_date.fromisoformat(str(date_val))
+            if parsed_date < dt_date.today():
+                return Response({'date': ['Không thể đăng ký lịch cho ngày đã qua.']}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            return Response({'date': ['Định dạng ngày không hợp lệ.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        session_val = request.data.get('session', 'full')
+        note_val = request.data.get('note', '')
+
+        schedule, created = DoctorSchedule.objects.update_or_create(
+            doctor=doctor,
+            date=date_val,
+            defaults={
+                'session': session_val,
+                'note': note_val,
+                'status': 'registered' if user.role == 'doctor' else 'approved'
+            }
+        )
+        return Response(
+            DoctorScheduleSerializer(schedule).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        )
+
     def perform_create(self, serializer):
-        doctor = self.request.user.doctor_profile
+        doctor, _ = Doctor.objects.get_or_create(user=self.request.user)
         serializer.save(doctor=doctor, status='registered')
 
     def update(self, request, *args, **kwargs):

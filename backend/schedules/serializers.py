@@ -73,13 +73,6 @@ class DoctorScheduleCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        request = self.context.get('request')
-        doctor = request.user.doctor_profile
-        date = data.get('date')
-        # Kiểm tra nếu đã có lịch cho ngày này (khi tạo mới)
-        if self.instance is None:
-            if DoctorSchedule.objects.filter(doctor=doctor, date=date).exists():
-                raise serializers.ValidationError({'date': 'Bạn đã đăng ký lịch cho ngày này rồi.'})
         return data
 
 

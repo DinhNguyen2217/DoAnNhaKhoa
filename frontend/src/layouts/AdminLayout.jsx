@@ -4,7 +4,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   DashboardOutlined, UserOutlined, MedicineBoxOutlined, TeamOutlined,
   ToolOutlined, BarChartOutlined, LogoutOutlined, MenuFoldOutlined,
-  MenuUnfoldOutlined, HeartOutlined, DollarCircleOutlined
+  MenuUnfoldOutlined, HeartOutlined, DollarCircleOutlined, HistoryOutlined
 } from '@ant-design/icons'
 import { useAuth } from '../context/AuthContext'
 import { logout } from '../api/auth'
@@ -24,6 +24,7 @@ export default function AdminLayout() {
     { key: '/admin/accounts', icon: <UserOutlined />, label: 'Tài khoản' },
     { key: '/admin/doctors', icon: <MedicineBoxOutlined />, label: 'Bác sĩ' },
     { key: '/admin/patients', icon: <TeamOutlined />, label: 'Bệnh nhân' },
+    { key: '/admin/examination-history', icon: <HistoryOutlined />, label: 'Lịch sử khám bệnh' },
     { key: '/admin/services', icon: <ToolOutlined />, label: 'Dịch vụ' },
     { key: '/admin/payroll', icon: <DollarCircleOutlined />, label: 'Lương & Ca trực' },
     { key: '/admin/statistics', icon: <BarChartOutlined />, label: 'Thống kê & Biểu đồ' },

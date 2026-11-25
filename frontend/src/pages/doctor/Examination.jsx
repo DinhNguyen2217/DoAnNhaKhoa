@@ -5,9 +5,9 @@ import {
 } from 'antd'
 import {
   MedicineBoxOutlined, CheckCircleOutlined, UserOutlined, FileTextOutlined,
-  ClockCircleOutlined, AlertOutlined, SmileOutlined, ReloadOutlined
+  ClockCircleOutlined, AlertOutlined, SmileOutlined, ReloadOutlined, HistoryOutlined
 } from '@ant-design/icons'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getAppointments, updateAppointment } from '../../api/appointments'
 import { createMedicalRecord, getMedicalRecords } from '../../api/medical'
 import { formatDate, formatMoney } from '../../utils/helpers'
@@ -87,12 +87,12 @@ export default function DoctorExamination() {
       const res = await getAppointments()
       const list = res.data.results || res.data || []
 
-      // Lọc các bệnh nhân: checked_in (ưu tiên), in_progress, confirmed, hoặc đã hoàn thành gần đây
+      // Chỉ hiển thị bệnh nhân ĐANG CHỜ KHÁM hoặc ĐANG KHÁM (chưa hoàn tất khám và chưa có bệnh án)
       const activeList = list.filter(a =>
-        a.status === 'checked_in' ||
-        a.status === 'in_progress' ||
-        a.status === 'confirmed' ||
-        a.status === 'completed'
+        (a.status === 'checked_in' || a.status === 'in_progress' || a.status === 'confirmed') &&
+        !a.has_medical_record &&
+        a.status !== 'completed' &&
+        a.status !== 'cancelled'
       )
 
       setAppointments(activeList)
@@ -139,10 +139,13 @@ export default function DoctorExamination() {
       await createMedicalRecord(payload)
 
       toast.success(
-        'Đã hoàn thành lượt khám & lưu hồ sơ bệnh án thành công! Dữ liệu đã lập tức chuyển sang Lễ tân để tính tiền và đồng bộ sang Bệnh nhân.',
+        'Đã hoàn thành lượt khám & lưu hồ sơ bệnh án thành công! Bệnh nhân đã được chuyển sang mục Lịch sử khám và gửi sang Lễ tân để tính tiền.',
         { duration: 5000 }
       )
 
+      setSelectedAppId(null)
+      form.resetFields()
+      setExistingRecord(null)
       fetchWaitingPatients()
     } catch (err) {
       const msg = err.response?.data?.appointment?.[0] || err.response?.data?.detail || 'Lỗi khi lưu kết quả khám bệnh. Vui lòng kiểm tra lại.'
@@ -156,11 +159,21 @@ export default function DoctorExamination() {
 
   return (
     <div>
-      <div style={{ marginBottom: 20 }}>
-        <Title level={3} style={{ margin: 0, color: '#003a8c' }}>PHÒNG KHÁM BỆNH & BỆNH ÁN ĐIỆN TỬ</Title>
-        <Text type="secondary">
-          Bác sĩ chẩn đoán, ghi nhận điều trị và kê đơn thuốc. Hồ sơ sau khi lưu sẽ đồng bộ ngay lập tức sang quầy Lễ tân để lập hóa đơn tính tiền và cập nhật vào Sổ bệnh án của bệnh nhân.
-        </Text>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div>
+          <Title level={3} style={{ margin: 0, color: '#003a8c' }}>PHÒNG KHÁM BỆNH & BỆNH ÁN ĐIỆN TỬ</Title>
+          <Text type="secondary">
+            Bác sĩ chẩn đoán, ghi nhận điều trị và kê đơn thuốc. Sau khi hoàn tất khám, bệnh nhân sẽ được chuyển sang mục Lịch sử khám.
+          </Text>
+        </div>
+        <Button
+          type="primary"
+          icon={<HistoryOutlined />}
+          onClick={() => navigate('/doctor/history')}
+          style={{ background: '#003a8c' }}
+        >
+          Lịch sử khám bệnh
+        </Button>
       </div>
 
       <Row gutter={24}>
